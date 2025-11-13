@@ -4,8 +4,9 @@ A powerful Model Context Protocol (MCP) server for working with Excel files usin
 
 ## Features
 
-- **23 comprehensive tools** for Excel manipulation
+- **34 comprehensive tools** for Excel manipulation
 - Full support for reading, writing, formatting, and analyzing Excel files
+- **NEW**: Charts, Pivot Tables, Excel Tables, and Conditional Formatting
 - Built with the official MCP SDK
 - Type-safe with TypeScript and Zod validation
 - Preserves formatting when modifying files
@@ -405,6 +406,202 @@ Filter rows by condition.
   "condition": "greater_than",
   "value": 1000,
   "responseFormat": "json"
+}
+```
+
+### 📈 Charts (1 tool)
+
+#### 24. `excel_create_chart`
+Create charts from data ranges.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Sales",
+  "chartType": "column",
+  "dataRange": "A1:B10",
+  "position": "D2",
+  "title": "Monthly Sales",
+  "showLegend": true,
+  "createBackup": false
+}
+```
+
+**Note**: ExcelJS has limited native chart support. This creates a chart placeholder with metadata.
+
+### 🔄 Pivot Tables (1 tool)
+
+#### 25. `excel_create_pivot_table`
+Create pivot tables for data analysis.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sourceSheetName": "Sales",
+  "sourceRange": "A1:D100",
+  "targetSheetName": "Pivot",
+  "targetCell": "A1",
+  "rows": ["Product"],
+  "columns": ["Month"],
+  "values": [
+    { "field": "Amount", "aggregation": "sum" }
+  ],
+  "createBackup": false
+}
+```
+
+### 📋 Excel Tables (1 tool)
+
+#### 26. `excel_create_table`
+Convert ranges to formatted Excel tables.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Data",
+  "range": "A1:D50",
+  "tableName": "SalesTable",
+  "tableStyle": "TableStyleMedium2",
+  "showRowStripes": true,
+  "createBackup": false
+}
+```
+
+### ✅ Validation (3 tools)
+
+#### 27. `excel_validate_formula_syntax`
+Validate formula syntax without applying it.
+
+**Example:**
+```json
+{
+  "formula": "SUM(A1:A10) / COUNT(B1:B10)"
+}
+```
+
+#### 28. `excel_validate_range`
+Validate if a range string is valid.
+
+**Example:**
+```json
+{
+  "range": "A1:Z100"
+}
+```
+
+#### 29. `excel_get_data_validation_info`
+Get data validation rules for a cell.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Input",
+  "cellAddress": "A1",
+  "responseFormat": "json"
+}
+```
+
+### 🔧 Advanced Operations (4 tools)
+
+#### 30. `excel_insert_rows`
+Insert rows at a specific position.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Sales",
+  "startRow": 5,
+  "count": 3,
+  "createBackup": false
+}
+```
+
+#### 31. `excel_insert_columns`
+Insert columns at a specific position.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Sales",
+  "startColumn": "C",
+  "count": 2,
+  "createBackup": false
+}
+```
+
+#### 32. `excel_unmerge_cells`
+Unmerge previously merged cells.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Report",
+  "range": "A1:D1",
+  "createBackup": false
+}
+```
+
+#### 33. `excel_get_merged_cells`
+List all merged cell ranges in a sheet.
+
+**Example:**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Report",
+  "responseFormat": "markdown"
+}
+```
+
+### 🎨 Conditional Formatting (1 tool)
+
+#### 34. `excel_apply_conditional_format`
+Apply conditional formatting to ranges.
+
+**Example (Cell Value):**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Sales",
+  "range": "B2:B100",
+  "ruleType": "cellValue",
+  "condition": {
+    "operator": "greaterThan",
+    "value": 1000
+  },
+  "style": {
+    "fill": {
+      "type": "pattern",
+      "pattern": "solid",
+      "fgColor": "FF00FF00"
+    },
+    "font": {
+      "bold": true
+    }
+  },
+  "createBackup": false
+}
+```
+
+**Example (Color Scale):**
+```json
+{
+  "filePath": "./data.xlsx",
+  "sheetName": "Sales",
+  "range": "C2:C100",
+  "ruleType": "colorScale",
+  "colorScale": {
+    "minColor": "FFFF0000",
+    "maxColor": "FF00FF00"
+  },
+  "createBackup": false
 }
 ```
 

@@ -210,3 +210,121 @@ export const filterRowsSchema = z.object({
   value: z.any().optional().describe('Value to compare against (not needed for not_empty)'),
   responseFormat: responseFormatSchema,
 });
+
+// Charts
+export const createChartSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  chartType: z.enum(['line', 'bar', 'column', 'pie', 'scatter', 'area']),
+  dataRange: rangeSchema.describe('Range of data for the chart'),
+  position: cellAddressSchema.describe('Top-left cell where chart will be placed'),
+  title: z.string().optional().describe('Chart title'),
+  showLegend: z.boolean().default(true),
+  createBackup: z.boolean().default(false),
+});
+
+// Pivot Tables
+export const createPivotTableSchema = z.object({
+  filePath: filePathSchema,
+  sourceSheetName: sheetNameSchema.describe('Sheet containing source data'),
+  sourceRange: rangeSchema.describe('Range of source data'),
+  targetSheetName: sheetNameSchema.describe('Sheet for pivot table'),
+  targetCell: cellAddressSchema.describe('Top-left cell for pivot table'),
+  rows: z.array(z.string()).describe('Fields for row labels'),
+  columns: z.array(z.string()).optional().describe('Fields for column labels'),
+  values: z.array(z.object({
+    field: z.string(),
+    aggregation: z.enum(['sum', 'count', 'average', 'min', 'max']),
+  })).describe('Fields to aggregate'),
+  createBackup: z.boolean().default(false),
+});
+
+// Tables
+export const createTableSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  range: rangeSchema.describe('Range to convert to table'),
+  tableName: z.string().describe('Name for the table'),
+  tableStyle: z.string().optional().default('TableStyleMedium2').describe('Excel table style'),
+  showFirstColumn: z.boolean().default(false),
+  showLastColumn: z.boolean().default(false),
+  showRowStripes: z.boolean().default(true),
+  showColumnStripes: z.boolean().default(false),
+  createBackup: z.boolean().default(false),
+});
+
+// Validation operations
+export const validateFormulaSyntaxSchema = z.object({
+  formula: z.string().describe('Formula to validate (without = sign)'),
+});
+
+export const validateExcelRangeSchema = z.object({
+  range: z.string().describe('Range to validate (e.g., A1:D10)'),
+});
+
+export const getDataValidationInfoSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  cellAddress: cellAddressSchema,
+  responseFormat: responseFormatSchema,
+});
+
+// Advanced operations
+export const insertRowsSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  startRow: z.number().describe('Row number where to insert (1-based)'),
+  count: z.number().describe('Number of rows to insert'),
+  createBackup: z.boolean().default(false),
+});
+
+export const insertColumnsSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  startColumn: z.union([z.string(), z.number()]).describe('Column where to insert (letter or number)'),
+  count: z.number().describe('Number of columns to insert'),
+  createBackup: z.boolean().default(false),
+});
+
+export const unmergeCellsSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  range: rangeSchema.describe('Range to unmerge'),
+  createBackup: z.boolean().default(false),
+});
+
+export const getMergedCellsSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  responseFormat: responseFormatSchema,
+});
+
+// Conditional formatting
+export const applyConditionalFormatSchema = z.object({
+  filePath: filePathSchema,
+  sheetName: sheetNameSchema,
+  range: rangeSchema,
+  ruleType: z.enum(['cellValue', 'colorScale', 'dataBar', 'topBottom']),
+  condition: z.object({
+    operator: z.enum(['greaterThan', 'lessThan', 'between', 'equal', 'notEqual', 'containsText']).optional(),
+    value: z.any().optional(),
+    value2: z.any().optional().describe('Second value for "between" operator'),
+  }).optional(),
+  style: z.object({
+    font: z.object({
+      color: z.string().optional(),
+      bold: z.boolean().optional(),
+    }).optional(),
+    fill: z.object({
+      type: z.literal('pattern'),
+      pattern: z.enum(['solid', 'darkVertical', 'darkHorizontal', 'darkGrid']),
+      fgColor: z.string().optional(),
+    }).optional(),
+  }).optional(),
+  colorScale: z.object({
+    minColor: z.string().optional().default('FFFF0000'),
+    midColor: z.string().optional(),
+    maxColor: z.string().optional().default('FF00FF00'),
+  }).optional().describe('For colorScale type'),
+  createBackup: z.boolean().default(false),
+});

@@ -16,6 +16,12 @@ import { formatCell, setColumnWidth, setRowHeight, mergeCells } from './tools/fo
 import { createSheet, deleteSheet, renameSheet, duplicateSheet } from './tools/sheets.js';
 import { deleteRows, deleteColumns, copyRange } from './tools/operations.js';
 import { searchValue, filterRows } from './tools/analysis.js';
+import { createChart } from './tools/charts.js';
+import { createPivotTable } from './tools/pivots.js';
+import { createTable } from './tools/tables.js';
+import { validateFormulaSyntax, validateExcelRange, getDataValidationInfo } from './tools/validation.js';
+import { insertRows, insertColumns, unmergeCells, getMergedCells } from './tools/advanced.js';
+import { applyConditionalFormat } from './tools/conditional.js';
 
 import { TOOL_ANNOTATIONS } from './constants.js';
 
@@ -23,7 +29,7 @@ import { TOOL_ANNOTATIONS } from './constants.js';
 const server = new Server(
   {
     name: 'excel-mcp-server',
-    version: '1.0.0',
+    version: '2.0.0',
   },
   {
     capabilities: {
@@ -402,6 +408,197 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
         annotations: TOOL_ANNOTATIONS.READ_ONLY,
       },
+
+      // CHARTS
+      {
+        name: 'excel_create_chart',
+        description: 'Create a chart (line, bar, column, pie, scatter, area)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            chartType: { type: 'string', enum: ['line', 'bar', 'column', 'pie', 'scatter', 'area'] },
+            dataRange: { type: 'string', description: 'Range of data (e.g., A1:D10)' },
+            position: { type: 'string', description: 'Position for chart (e.g., F2)' },
+            title: { type: 'string', description: 'Chart title' },
+            showLegend: { type: 'boolean', default: true },
+            createBackup: { type: 'boolean', default: false },
+          },
+          required: ['filePath', 'sheetName', 'chartType', 'dataRange', 'position'],
+        },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
+      },
+
+      // PIVOT TABLES
+      {
+        name: 'excel_create_pivot_table',
+        description: 'Create a pivot table for data analysis',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sourceSheetName: { type: 'string', description: 'Source sheet name' },
+            sourceRange: { type: 'string', description: 'Source data range' },
+            targetSheetName: { type: 'string', description: 'Target sheet for pivot table' },
+            targetCell: { type: 'string', description: 'Target cell (e.g., A1)' },
+            rows: { type: 'array', items: { type: 'string' }, description: 'Row fields' },
+            columns: { type: 'array', items: { type: 'string' }, description: 'Column fields' },
+            values: { type: 'array', description: 'Value fields with aggregation' },
+            createBackup: { type: 'boolean', default: false },
+          },
+          required: ['filePath', 'sourceSheetName', 'sourceRange', 'targetSheetName', 'targetCell', 'rows', 'values'],
+        },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
+      },
+
+      // TABLES
+      {
+        name: 'excel_create_table',
+        description: 'Convert a range to an Excel table with formatting',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            range: { type: 'string', description: 'Range to convert (e.g., A1:D10)' },
+            tableName: { type: 'string', description: 'Name for the table' },
+            tableStyle: { type: 'string', default: 'TableStyleMedium2' },
+            showFirstColumn: { type: 'boolean', default: false },
+            showLastColumn: { type: 'boolean', default: false },
+            showRowStripes: { type: 'boolean', default: true },
+            showColumnStripes: { type: 'boolean', default: false },
+            createBackup: { type: 'boolean', default: false },
+          },
+          required: ['filePath', 'sheetName', 'range', 'tableName'],
+        },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
+      },
+
+      // VALIDATION
+      {
+        name: 'excel_validate_formula_syntax',
+        description: 'Validate Excel formula syntax without applying it',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            formula: { type: 'string', description: 'Formula to validate (without = sign)' },
+          },
+          required: ['formula'],
+        },
+        annotations: TOOL_ANNOTATIONS.READ_ONLY,
+      },
+      {
+        name: 'excel_validate_range',
+        description: 'Validate if a range string is valid',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            range: { type: 'string', description: 'Range to validate (e.g., A1:D10)' },
+          },
+          required: ['range'],
+        },
+        annotations: TOOL_ANNOTATIONS.READ_ONLY,
+      },
+      {
+        name: 'excel_get_data_validation_info',
+        description: 'Get data validation rules for a cell',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            cellAddress: { type: 'string', description: 'Cell address (e.g., A1)' },
+            responseFormat: { type: 'string', enum: ['json', 'markdown'], default: 'json' },
+          },
+          required: ['filePath', 'sheetName', 'cellAddress'],
+        },
+        annotations: TOOL_ANNOTATIONS.READ_ONLY,
+      },
+
+      // ADVANCED OPERATIONS
+      {
+        name: 'excel_insert_rows',
+        description: 'Insert rows at a specific position',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            startRow: { type: 'number', description: 'Row number to insert at (1-based)' },
+            count: { type: 'number', description: 'Number of rows to insert' },
+            createBackup: { type: 'boolean', default: false },
+          },
+          required: ['filePath', 'sheetName', 'startRow', 'count'],
+        },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
+      },
+      {
+        name: 'excel_insert_columns',
+        description: 'Insert columns at a specific position',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            startColumn: { description: 'Column to insert at (letter or number)' },
+            count: { type: 'number', description: 'Number of columns to insert' },
+            createBackup: { type: 'boolean', default: false },
+          },
+          required: ['filePath', 'sheetName', 'startColumn', 'count'],
+        },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
+      },
+      {
+        name: 'excel_unmerge_cells',
+        description: 'Unmerge previously merged cells',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            range: { type: 'string', description: 'Range to unmerge (e.g., A1:D1)' },
+            createBackup: { type: 'boolean', default: false },
+          },
+          required: ['filePath', 'sheetName', 'range'],
+        },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
+      },
+      {
+        name: 'excel_get_merged_cells',
+        description: 'List all merged cell ranges in a sheet',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            responseFormat: { type: 'string', enum: ['json', 'markdown'], default: 'json' },
+          },
+          required: ['filePath', 'sheetName'],
+        },
+        annotations: TOOL_ANNOTATIONS.READ_ONLY,
+      },
+
+      // CONDITIONAL FORMATTING
+      {
+        name: 'excel_apply_conditional_format',
+        description: 'Apply conditional formatting to a range',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the Excel file' },
+            sheetName: { type: 'string', description: 'Name of the sheet' },
+            range: { type: 'string', description: 'Range to format (e.g., A1:D10)' },
+            ruleType: { type: 'string', enum: ['cellValue', 'colorScale', 'dataBar', 'topBottom'] },
+            condition: { type: 'object', description: 'Condition for cellValue type' },
+            style: { type: 'object', description: 'Style to apply' },
+            colorScale: { type: 'object', description: 'Color scale settings' },
+            createBackup: { type: 'boolean', default: false },
+          },
+          required: ['filePath', 'sheetName', 'range', 'ruleType'],
+        },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
+      },
     ],
   };
 });
@@ -517,6 +714,121 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           args.condition as any,
           args.value,
           args.responseFormat as any
+        );
+        break;
+
+      // Charts
+      case 'excel_create_chart':
+        result = await createChart(
+          args.filePath as string,
+          args.sheetName as string,
+          args.chartType as any,
+          args.dataRange as string,
+          args.position as string,
+          args.title as string | undefined,
+          args.showLegend as boolean,
+          args.createBackup as boolean
+        );
+        break;
+
+      // Pivot tables
+      case 'excel_create_pivot_table':
+        result = await createPivotTable(
+          args.filePath as string,
+          args.sourceSheetName as string,
+          args.sourceRange as string,
+          args.targetSheetName as string,
+          args.targetCell as string,
+          args.rows as string[],
+          args.columns as string[] | undefined,
+          args.values as any[],
+          args.createBackup as boolean
+        );
+        break;
+
+      // Tables
+      case 'excel_create_table':
+        result = await createTable(
+          args.filePath as string,
+          args.sheetName as string,
+          args.range as string,
+          args.tableName as string,
+          args.tableStyle as string,
+          args.showFirstColumn as boolean,
+          args.showLastColumn as boolean,
+          args.showRowStripes as boolean,
+          args.showColumnStripes as boolean,
+          args.createBackup as boolean
+        );
+        break;
+
+      // Validation
+      case 'excel_validate_formula_syntax':
+        result = await validateFormulaSyntax(args.formula as string);
+        break;
+
+      case 'excel_validate_range':
+        result = await validateExcelRange(args.range as string);
+        break;
+
+      case 'excel_get_data_validation_info':
+        result = await getDataValidationInfo(
+          args.filePath as string,
+          args.sheetName as string,
+          args.cellAddress as string,
+          args.responseFormat as any
+        );
+        break;
+
+      // Advanced operations
+      case 'excel_insert_rows':
+        result = await insertRows(
+          args.filePath as string,
+          args.sheetName as string,
+          args.startRow as number,
+          args.count as number,
+          args.createBackup as boolean
+        );
+        break;
+
+      case 'excel_insert_columns':
+        result = await insertColumns(
+          args.filePath as string,
+          args.sheetName as string,
+          args.startColumn as string | number,
+          args.count as number,
+          args.createBackup as boolean
+        );
+        break;
+
+      case 'excel_unmerge_cells':
+        result = await unmergeCells(
+          args.filePath as string,
+          args.sheetName as string,
+          args.range as string,
+          args.createBackup as boolean
+        );
+        break;
+
+      case 'excel_get_merged_cells':
+        result = await getMergedCells(
+          args.filePath as string,
+          args.sheetName as string,
+          args.responseFormat as any
+        );
+        break;
+
+      // Conditional formatting
+      case 'excel_apply_conditional_format':
+        result = await applyConditionalFormat(
+          args.filePath as string,
+          args.sheetName as string,
+          args.range as string,
+          args.ruleType as any,
+          args.condition as any,
+          args.style as any,
+          args.colorScale as any,
+          args.createBackup as boolean
         );
         break;
 

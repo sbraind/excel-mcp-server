@@ -1,7 +1,7 @@
 {
   "name": "excel-mcp-server",
-  "version": "1.0.0",
-  "description": "MCP Server for Excel file operations using ExcelJS",
+  "version": "2.0.0",
+  "description": "MCP Server for Excel file operations with 34 tools using ExcelJS",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
