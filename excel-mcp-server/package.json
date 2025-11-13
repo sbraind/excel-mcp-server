@@ -1,0 +1,38 @@
+{
+  "name": "excel-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Excel file operations using ExcelJS",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "excel-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "excel",
+    "exceljs",
+    "spreadsheet"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "exceljs": "^4.4.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "excel": {
+      "command": "node",
+      "args": ["/absolute/path/to/excel-mcp-server/dist/index.js"]
+    }
+  }
+}
