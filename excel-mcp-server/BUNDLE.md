@@ -69,16 +69,35 @@ excel-mcp-server-2.0.0.mcpb
 
 ## Installing the Bundle
 
-### Method 1: Single-Click Installation (Future)
+### Method 1: Single-Click Installation (Recommended) ⭐
 
-Once MCP-compatible applications support bundle installation, users will be able to:
+Claude Desktop for macOS and Windows now supports one-click installation:
+
+**Option A: Double-Click**
 1. Download the `.mcpb` file
-2. Double-click or drag-and-drop into the application
-3. The server will be automatically configured and ready to use
+2. Double-click the file
+3. Claude Desktop will open and prompt you to install
+4. Click "Install" and follow any configuration prompts
+5. Restart Claude Desktop
 
-### Method 2: Manual Installation via Claude Desktop
+**Option B: Via Claude Desktop Settings**
+1. Download the `.mcpb` file
+2. Open Claude Desktop
+3. Go to **Settings** → **Extensions** → **Advanced Settings**
+4. Click **"Install Extension..."**
+5. Select the `.mcpb` file
+6. Follow the prompts to complete installation
+7. Restart Claude Desktop
 
-For now, users can extract and configure manually:
+**Important Notes:**
+- No Node.js installation required! Claude Desktop includes Node.js built-in
+- No manual configuration files to edit
+- All dependencies are bundled in the `.mcpb` file
+- Works on both macOS and Windows
+
+### Method 2: Manual Installation (Alternative)
+
+For advanced users or other MCP-compatible applications:
 
 1. **Extract the bundle:**
    ```bash
@@ -169,16 +188,18 @@ Check that it includes:
 ## Why Use MCP Bundles?
 
 ### For Users:
-- **Easy installation:** One file, no manual configuration
-- **Self-contained:** All dependencies included
-- **Version management:** Clear version tracking
-- **Consistency:** Same installation experience across applications
+- **One-click installation:** Works now in Claude Desktop for macOS and Windows
+- **No setup required:** No Node.js installation, no config files to edit
+- **Self-contained:** All dependencies included in a single file
+- **Version management:** Clear version tracking and updates
+- **Consistent experience:** Same installation process across all MCPB extensions
 
 ### For Developers:
-- **Standardized distribution:** Follow ecosystem best practices
-- **Better discoverability:** Rich metadata for searching
-- **Professional packaging:** Production-ready format
-- **Future-proof:** Compatible with emerging MCP ecosystem
+- **Wider reach:** Users can install without technical expertise
+- **Standardized distribution:** Follow MCP ecosystem best practices
+- **Better discoverability:** Rich metadata enables searching and categorization
+- **Professional packaging:** Production-ready format with security features
+- **Cross-platform:** Works on macOS, Windows, and Linux (with compatible apps)
 
 ## Resources
 

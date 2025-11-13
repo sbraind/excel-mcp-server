@@ -15,14 +15,30 @@ A powerful Model Context Protocol (MCP) server for working with Excel files usin
 
 ## Installation
 
-```bash
-npm install
-npm run build
-```
+### 🚀 Quick Installation (Recommended) - One Click!
 
-## Installation
+The easiest way to install this server is using the pre-built MCPB bundle:
 
-### Step 1: Build the project
+1. **Download** the latest `excel-mcp-server.mcpb` file from the [releases page](https://github.com/sbraind/Experimentos/releases)
+2. **Double-click** the `.mcpb` file, or:
+   - Open Claude Desktop
+   - Go to **Settings** → **Extensions** → **Advanced Settings**
+   - Click **"Install Extension..."**
+   - Select the downloaded `.mcpb` file
+3. **Restart** Claude Desktop
+4. **Done!** No Node.js installation, no config files to edit
+
+> **Note:** One-click installation works on Claude Desktop for macOS and Windows. All dependencies are bundled - no additional setup required!
+
+For more details, see [BUNDLE.md](BUNDLE.md).
+
+---
+
+### 🛠️ Manual Installation (Advanced)
+
+If you prefer to build from source:
+
+#### Step 1: Build the project
 
 ```bash
 cd /home/user/Experimentos/excel-mcp-server
@@ -30,7 +46,7 @@ npm install
 npm run build
 ```
 
-### Step 2: Configure Claude Desktop
+#### Step 2: Configure Claude Desktop
 
 Add this configuration to your Claude Desktop config file:
 
@@ -51,11 +67,11 @@ Add this configuration to your Claude Desktop config file:
 
 **Note**: Adjust the path according to your installation directory.
 
-### Step 3: Restart Claude Desktop
+#### Step 3: Restart Claude Desktop
 
 Close and reopen Claude Desktop completely.
 
-### Step 4: Verify
+#### Step 4: Verify
 
 The server should now be available in Claude. Try:
 ```
@@ -63,6 +79,8 @@ List the sheets in /home/user/Experimentos/excel-mcp-server/test.xlsx
 ```
 
 For detailed installation instructions and troubleshooting, see [INSTALLATION.md](INSTALLATION.md).
+
+---
 
 ## Available Tools
 
