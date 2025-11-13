@@ -1,0 +1,205 @@
+{
+  "manifest_version": "0.3",
+  "name": "excel-mcp-server",
+  "version": "2.0.0",
+  "display_name": "Excel MCP Server",
+  "description": "MCP Server for Excel file operations with 34 tools using ExcelJS",
+  "long_description": "A powerful Model Context Protocol (MCP) server for working with Excel files. Provides comprehensive tools for reading, writing, formatting, analyzing Excel spreadsheets, creating charts, pivot tables, conditional formatting, and much more. Built with TypeScript and ExcelJS for maximum reliability and type safety.",
+  "author": {
+    "name": "Excel MCP Server Team"
+  },
+  "license": "MIT",
+  "keywords": [
+    "excel",
+    "spreadsheet",
+    "exceljs",
+    "mcp",
+    "model-context-protocol",
+    "xlsx",
+    "data-analysis",
+    "charts",
+    "pivot-tables"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sbraind/Experimentos"
+  },
+  "homepage": "https://github.com/sbraind/Experimentos/tree/main/excel-mcp-server",
+  "documentation": "https://github.com/sbraind/Experimentos/blob/main/excel-mcp-server/README.md",
+  "support": "https://github.com/sbraind/Experimentos/issues",
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "dist/index.js"
+      ],
+      "env": {}
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "tools": [
+    {
+      "name": "excel_read_workbook",
+      "description": "List all sheets and metadata of an Excel workbook"
+    },
+    {
+      "name": "excel_read_sheet",
+      "description": "Read complete data from a sheet with optional range"
+    },
+    {
+      "name": "excel_read_range",
+      "description": "Read a specific range of cells"
+    },
+    {
+      "name": "excel_get_cell",
+      "description": "Read value from a specific cell"
+    },
+    {
+      "name": "excel_get_formula",
+      "description": "Read the formula from a specific cell"
+    },
+    {
+      "name": "excel_write_workbook",
+      "description": "Create a new Excel file with data"
+    },
+    {
+      "name": "excel_update_cell",
+      "description": "Update value of a specific cell"
+    },
+    {
+      "name": "excel_write_range",
+      "description": "Write multiple cells simultaneously"
+    },
+    {
+      "name": "excel_add_row",
+      "description": "Add a row at the end of the sheet"
+    },
+    {
+      "name": "excel_set_formula",
+      "description": "Set or modify a formula in a cell"
+    },
+    {
+      "name": "excel_format_cell",
+      "description": "Change cell formatting (color, font, borders, alignment)"
+    },
+    {
+      "name": "excel_set_column_width",
+      "description": "Adjust width of a column"
+    },
+    {
+      "name": "excel_set_row_height",
+      "description": "Adjust height of a row"
+    },
+    {
+      "name": "excel_merge_cells",
+      "description": "Merge cells in a range"
+    },
+    {
+      "name": "excel_create_sheet",
+      "description": "Create a new sheet in the workbook"
+    },
+    {
+      "name": "excel_delete_sheet",
+      "description": "Delete a sheet from the workbook"
+    },
+    {
+      "name": "excel_rename_sheet",
+      "description": "Rename a sheet"
+    },
+    {
+      "name": "excel_duplicate_sheet",
+      "description": "Duplicate a complete sheet"
+    },
+    {
+      "name": "excel_delete_rows",
+      "description": "Delete specific rows"
+    },
+    {
+      "name": "excel_delete_columns",
+      "description": "Delete specific columns"
+    },
+    {
+      "name": "excel_copy_range",
+      "description": "Copy range to another location"
+    },
+    {
+      "name": "excel_search_value",
+      "description": "Search for a value in sheet/range"
+    },
+    {
+      "name": "excel_filter_rows",
+      "description": "Filter rows by condition"
+    },
+    {
+      "name": "excel_create_chart",
+      "description": "Create charts from data ranges"
+    },
+    {
+      "name": "excel_create_pivot_table",
+      "description": "Create pivot tables for data analysis"
+    },
+    {
+      "name": "excel_create_table",
+      "description": "Convert ranges to formatted Excel tables"
+    },
+    {
+      "name": "excel_validate_formula_syntax",
+      "description": "Validate formula syntax without applying it"
+    },
+    {
+      "name": "excel_validate_range",
+      "description": "Validate if a range string is valid"
+    },
+    {
+      "name": "excel_get_data_validation_info",
+      "description": "Get data validation rules for a cell"
+    },
+    {
+      "name": "excel_insert_rows",
+      "description": "Insert rows at a specific position"
+    },
+    {
+      "name": "excel_insert_columns",
+      "description": "Insert columns at a specific position"
+    },
+    {
+      "name": "excel_unmerge_cells",
+      "description": "Unmerge previously merged cells"
+    },
+    {
+      "name": "excel_get_merged_cells",
+      "description": "List all merged cell ranges in a sheet"
+    },
+    {
+      "name": "excel_apply_conditional_format",
+      "description": "Apply conditional formatting to ranges"
+    }
+  ],
+  "tools_generated": false,
+  "prompts": [],
+  "prompts_generated": false,
+  "user_config": {
+    "createBackupByDefault": {
+      "type": "boolean",
+      "title": "Create Backup by Default",
+      "description": "Automatically create backup files before modifying Excel files",
+      "default": false,
+      "required": false
+    },
+    "defaultResponseFormat": {
+      "type": "string",
+      "title": "Default Response Format",
+      "description": "Default format for responses (json or markdown)",
+      "default": "json",
+      "required": false
+    }
+  }
+}

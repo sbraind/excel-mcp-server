@@ -12,17 +12,34 @@
     "watch": "tsc --watch",
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "pack:mcpb": "mcpb pack ."
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
     "excel",
     "exceljs",
-    "spreadsheet"
+    "spreadsheet",
+    "xlsx",
+    "data-analysis",
+    "charts",
+    "pivot-tables",
+    "conditional-formatting"
   ],
-  "author": "",
+  "author": {
+    "name": "Excel MCP Server Team"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sbraind/Experimentos.git",
+    "directory": "excel-mcp-server"
+  },
+  "homepage": "https://github.com/sbraind/Experimentos/tree/main/excel-mcp-server",
+  "bugs": {
+    "url": "https://github.com/sbraind/Experimentos/issues"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "exceljs": "^4.4.0",
