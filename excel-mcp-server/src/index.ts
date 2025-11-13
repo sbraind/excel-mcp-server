@@ -8,6 +8,7 @@ import {
   ErrorCode,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
+import { ZodError } from 'zod';
 
 // Import tool implementations
 import { readWorkbook, readSheet, readRange, getCell, getFormula } from './tools/read.js';
@@ -24,6 +25,59 @@ import { insertRows, insertColumns, unmergeCells, getMergedCells } from './tools
 import { applyConditionalFormat } from './tools/conditional.js';
 
 import { TOOL_ANNOTATIONS } from './constants.js';
+import * as schemas from './schemas/index.js';
+import { setAllowedDirectories } from './tools/helpers.js';
+
+// User configuration storage
+interface UserConfig {
+  createBackupByDefault?: boolean;
+  defaultResponseFormat?: 'json' | 'markdown';
+  allowedDirectories?: string[];
+}
+
+let userConfig: UserConfig = {
+  createBackupByDefault: false,
+  defaultResponseFormat: 'json',
+  allowedDirectories: [],
+};
+
+// Schema mapping for validation
+const toolSchemas: Record<string, any> = {
+  excel_read_workbook: schemas.readWorkbookSchema,
+  excel_read_sheet: schemas.readSheetSchema,
+  excel_read_range: schemas.readRangeSchema,
+  excel_get_cell: schemas.getCellSchema,
+  excel_get_formula: schemas.getFormulaSchema,
+  excel_write_workbook: schemas.writeWorkbookSchema,
+  excel_update_cell: schemas.updateCellSchema,
+  excel_write_range: schemas.writeRangeSchema,
+  excel_add_row: schemas.addRowSchema,
+  excel_set_formula: schemas.setFormulaSchema,
+  excel_format_cell: schemas.formatCellSchema,
+  excel_set_column_width: schemas.setColumnWidthSchema,
+  excel_set_row_height: schemas.setRowHeightSchema,
+  excel_merge_cells: schemas.mergeCellsSchema,
+  excel_create_sheet: schemas.createSheetSchema,
+  excel_delete_sheet: schemas.deleteSheetSchema,
+  excel_rename_sheet: schemas.renameSheetSchema,
+  excel_duplicate_sheet: schemas.duplicateSheetSchema,
+  excel_delete_rows: schemas.deleteRowsSchema,
+  excel_delete_columns: schemas.deleteColumnsSchema,
+  excel_copy_range: schemas.copyRangeSchema,
+  excel_search_value: schemas.searchValueSchema,
+  excel_filter_rows: schemas.filterRowsSchema,
+  excel_create_chart: schemas.createChartSchema,
+  excel_create_pivot_table: schemas.createPivotTableSchema,
+  excel_create_table: schemas.createTableSchema,
+  excel_validate_formula_syntax: schemas.validateFormulaSyntaxSchema,
+  excel_validate_range: schemas.validateExcelRangeSchema,
+  excel_get_data_validation_info: schemas.getDataValidationInfoSchema,
+  excel_insert_rows: schemas.insertRowsSchema,
+  excel_insert_columns: schemas.insertColumnsSchema,
+  excel_unmerge_cells: schemas.unmergeCellsSchema,
+  excel_get_merged_cells: schemas.getMergedCellsSchema,
+  excel_apply_conditional_format: schemas.applyConditionalFormatSchema,
+};
 
 // Create server instance
 const server = new Server(
@@ -612,223 +666,248 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       throw new McpError(ErrorCode.InvalidParams, 'Missing arguments');
     }
 
+    // Validate arguments with Zod schema
+    const schema = toolSchemas[name];
+    if (!schema) {
+      throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+    }
+
+    let validatedArgs: any;
+    try {
+      validatedArgs = schema.parse(args);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const issues = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        throw new McpError(ErrorCode.InvalidParams, `Invalid arguments: ${issues}`);
+      }
+      throw error;
+    }
+
+    // Apply user config defaults
+    if (validatedArgs.createBackup === undefined && userConfig.createBackupByDefault !== undefined) {
+      validatedArgs.createBackup = userConfig.createBackupByDefault;
+    }
+    if (validatedArgs.responseFormat === undefined && userConfig.defaultResponseFormat !== undefined) {
+      validatedArgs.responseFormat = userConfig.defaultResponseFormat;
+    }
+
     let result: string;
 
     switch (name) {
       // Read operations
       case 'excel_read_workbook':
-        result = await readWorkbook(args.filePath as string, args.responseFormat as any);
+        result = await readWorkbook(validatedArgs.filePath, validatedArgs.responseFormat);
         break;
       case 'excel_read_sheet':
-        result = await readSheet(args.filePath as string, args.sheetName as string, args.range as string | undefined, args.responseFormat as any);
+        result = await readSheet(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.range, validatedArgs.responseFormat);
         break;
       case 'excel_read_range':
-        result = await readRange(args.filePath as string, args.sheetName as string, args.range as string, args.responseFormat as any);
+        result = await readRange(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.range, validatedArgs.responseFormat);
         break;
       case 'excel_get_cell':
-        result = await getCell(args.filePath as string, args.sheetName as string, args.cellAddress as string, args.responseFormat as any);
+        result = await getCell(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.cellAddress, validatedArgs.responseFormat);
         break;
       case 'excel_get_formula':
-        result = await getFormula(args.filePath as string, args.sheetName as string, args.cellAddress as string, args.responseFormat as any);
+        result = await getFormula(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.cellAddress, validatedArgs.responseFormat);
         break;
 
       // Write operations
       case 'excel_write_workbook':
-        result = await writeWorkbook(args.filePath as string, (args.sheetName as string) || 'Sheet1', args.data as any[][], args.createBackup as boolean);
+        result = await writeWorkbook(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.data, validatedArgs.createBackup);
         break;
       case 'excel_update_cell':
-        result = await updateCell(args.filePath as string, args.sheetName as string, args.cellAddress as string, args.value, args.createBackup as boolean);
+        result = await updateCell(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.cellAddress, validatedArgs.value, validatedArgs.createBackup);
         break;
       case 'excel_write_range':
-        result = await writeRange(args.filePath as string, args.sheetName as string, args.range as string, args.data as any[][], args.createBackup as boolean);
+        result = await writeRange(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.range, validatedArgs.data, validatedArgs.createBackup);
         break;
       case 'excel_add_row':
-        result = await addRow(args.filePath as string, args.sheetName as string, args.data as any[], args.createBackup as boolean);
+        result = await addRow(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.data, validatedArgs.createBackup);
         break;
       case 'excel_set_formula':
-        result = await setFormula(args.filePath as string, args.sheetName as string, args.cellAddress as string, args.formula as string, args.createBackup as boolean);
+        result = await setFormula(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.cellAddress, validatedArgs.formula, validatedArgs.createBackup);
         break;
 
       // Format operations
       case 'excel_format_cell':
-        result = await formatCell(args.filePath as string, args.sheetName as string, args.cellAddress as string, args.format as any, args.createBackup as boolean);
+        result = await formatCell(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.cellAddress, validatedArgs.format, validatedArgs.createBackup);
         break;
       case 'excel_set_column_width':
-        result = await setColumnWidth(args.filePath as string, args.sheetName as string, args.column as string | number, args.width as number, args.createBackup as boolean);
+        result = await setColumnWidth(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.column, validatedArgs.width, validatedArgs.createBackup);
         break;
       case 'excel_set_row_height':
-        result = await setRowHeight(args.filePath as string, args.sheetName as string, args.row as number, args.height as number, args.createBackup as boolean);
+        result = await setRowHeight(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.row, validatedArgs.height, validatedArgs.createBackup);
         break;
       case 'excel_merge_cells':
-        result = await mergeCells(args.filePath as string, args.sheetName as string, args.range as string, args.createBackup as boolean);
+        result = await mergeCells(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.range, validatedArgs.createBackup);
         break;
 
       // Sheet management
       case 'excel_create_sheet':
-        result = await createSheet(args.filePath as string, args.sheetName as string, args.createBackup as boolean);
+        result = await createSheet(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.createBackup);
         break;
       case 'excel_delete_sheet':
-        result = await deleteSheet(args.filePath as string, args.sheetName as string, args.createBackup as boolean);
+        result = await deleteSheet(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.createBackup);
         break;
       case 'excel_rename_sheet':
-        result = await renameSheet(args.filePath as string, args.oldName as string, args.newName as string, args.createBackup as boolean);
+        result = await renameSheet(validatedArgs.filePath, validatedArgs.oldName, validatedArgs.newName, validatedArgs.createBackup);
         break;
       case 'excel_duplicate_sheet':
-        result = await duplicateSheet(args.filePath as string, args.sourceSheetName as string, args.newSheetName as string, args.createBackup as boolean);
+        result = await duplicateSheet(validatedArgs.filePath, validatedArgs.sourceSheetName, validatedArgs.newSheetName, validatedArgs.createBackup);
         break;
 
       // Operations
       case 'excel_delete_rows':
-        result = await deleteRows(args.filePath as string, args.sheetName as string, args.startRow as number, args.count as number, args.createBackup as boolean);
+        result = await deleteRows(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.startRow, validatedArgs.count, validatedArgs.createBackup);
         break;
       case 'excel_delete_columns':
-        result = await deleteColumns(args.filePath as string, args.sheetName as string, args.startColumn as string | number, args.count as number, args.createBackup as boolean);
+        result = await deleteColumns(validatedArgs.filePath, validatedArgs.sheetName, validatedArgs.startColumn, validatedArgs.count, validatedArgs.createBackup);
         break;
       case 'excel_copy_range':
         result = await copyRange(
-          args.filePath as string,
-          args.sourceSheetName as string,
-          args.sourceRange as string,
-          args.targetSheetName as string,
-          args.targetCell as string,
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sourceSheetName,
+          validatedArgs.sourceRange,
+          validatedArgs.targetSheetName,
+          validatedArgs.targetCell,
+          validatedArgs.createBackup
         );
         break;
 
       // Analysis
       case 'excel_search_value':
         result = await searchValue(
-          args.filePath as string,
-          args.sheetName as string,
-          args.searchValue,
-          args.range as string | undefined,
-          args.caseSensitive as boolean,
-          args.responseFormat as any
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.searchValue,
+          validatedArgs.range,
+          validatedArgs.caseSensitive,
+          validatedArgs.responseFormat
         );
         break;
       case 'excel_filter_rows':
         result = await filterRows(
-          args.filePath as string,
-          args.sheetName as string,
-          args.column as string | number,
-          args.condition as any,
-          args.value,
-          args.responseFormat as any
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.column,
+          validatedArgs.condition,
+          validatedArgs.value,
+          validatedArgs.responseFormat
         );
         break;
 
       // Charts
       case 'excel_create_chart':
         result = await createChart(
-          args.filePath as string,
-          args.sheetName as string,
-          args.chartType as any,
-          args.dataRange as string,
-          args.position as string,
-          args.title as string | undefined,
-          args.showLegend as boolean,
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.chartType,
+          validatedArgs.dataRange,
+          validatedArgs.position,
+          validatedArgs.title,
+          validatedArgs.showLegend,
+          validatedArgs.createBackup
         );
         break;
 
       // Pivot tables
       case 'excel_create_pivot_table':
         result = await createPivotTable(
-          args.filePath as string,
-          args.sourceSheetName as string,
-          args.sourceRange as string,
-          args.targetSheetName as string,
-          args.targetCell as string,
-          args.rows as string[],
-          args.columns as string[] | undefined,
-          args.values as any[],
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sourceSheetName,
+          validatedArgs.sourceRange,
+          validatedArgs.targetSheetName,
+          validatedArgs.targetCell,
+          validatedArgs.rows,
+          validatedArgs.columns,
+          validatedArgs.values,
+          validatedArgs.createBackup
         );
         break;
 
       // Tables
       case 'excel_create_table':
         result = await createTable(
-          args.filePath as string,
-          args.sheetName as string,
-          args.range as string,
-          args.tableName as string,
-          args.tableStyle as string,
-          args.showFirstColumn as boolean,
-          args.showLastColumn as boolean,
-          args.showRowStripes as boolean,
-          args.showColumnStripes as boolean,
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.range,
+          validatedArgs.tableName,
+          validatedArgs.tableStyle,
+          validatedArgs.showFirstColumn,
+          validatedArgs.showLastColumn,
+          validatedArgs.showRowStripes,
+          validatedArgs.showColumnStripes,
+          validatedArgs.createBackup
         );
         break;
 
       // Validation
       case 'excel_validate_formula_syntax':
-        result = await validateFormulaSyntax(args.formula as string);
+        result = await validateFormulaSyntax(validatedArgs.formula);
         break;
 
       case 'excel_validate_range':
-        result = await validateExcelRange(args.range as string);
+        result = await validateExcelRange(validatedArgs.range);
         break;
 
       case 'excel_get_data_validation_info':
         result = await getDataValidationInfo(
-          args.filePath as string,
-          args.sheetName as string,
-          args.cellAddress as string,
-          args.responseFormat as any
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.cellAddress,
+          validatedArgs.responseFormat
         );
         break;
 
       // Advanced operations
       case 'excel_insert_rows':
         result = await insertRows(
-          args.filePath as string,
-          args.sheetName as string,
-          args.startRow as number,
-          args.count as number,
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.startRow,
+          validatedArgs.count,
+          validatedArgs.createBackup
         );
         break;
 
       case 'excel_insert_columns':
         result = await insertColumns(
-          args.filePath as string,
-          args.sheetName as string,
-          args.startColumn as string | number,
-          args.count as number,
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.startColumn,
+          validatedArgs.count,
+          validatedArgs.createBackup
         );
         break;
 
       case 'excel_unmerge_cells':
         result = await unmergeCells(
-          args.filePath as string,
-          args.sheetName as string,
-          args.range as string,
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.range,
+          validatedArgs.createBackup
         );
         break;
 
       case 'excel_get_merged_cells':
         result = await getMergedCells(
-          args.filePath as string,
-          args.sheetName as string,
-          args.responseFormat as any
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.responseFormat
         );
         break;
 
       // Conditional formatting
       case 'excel_apply_conditional_format':
         result = await applyConditionalFormat(
-          args.filePath as string,
-          args.sheetName as string,
-          args.range as string,
-          args.ruleType as any,
-          args.condition as any,
-          args.style as any,
-          args.colorScale as any,
-          args.createBackup as boolean
+          validatedArgs.filePath,
+          validatedArgs.sheetName,
+          validatedArgs.range,
+          validatedArgs.ruleType,
+          validatedArgs.condition,
+          validatedArgs.style,
+          validatedArgs.colorScale,
+          validatedArgs.createBackup
         );
         break;
 
@@ -857,6 +936,40 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   }
 });
+
+// Handle configuration updates via notifications
+// Note: This will be called by Claude Desktop when user updates config
+async function handleConfigUpdate(config: any) {
+  try {
+    if (config.createBackupByDefault !== undefined) {
+      userConfig.createBackupByDefault = config.createBackupByDefault;
+    }
+
+    if (config.defaultResponseFormat !== undefined) {
+      userConfig.defaultResponseFormat = config.defaultResponseFormat;
+    }
+
+    if (config.allowedDirectories !== undefined) {
+      userConfig.allowedDirectories = Array.isArray(config.allowedDirectories)
+        ? config.allowedDirectories
+        : [];
+
+      // Update allowed directories in helpers
+      setAllowedDirectories(userConfig.allowedDirectories || []);
+    }
+
+    console.error('Configuration updated:', userConfig);
+  } catch (error) {
+    console.error('Error handling configuration:', error);
+  }
+}
+
+// Set up notification handler
+server.notification = async (notification: any) => {
+  if (notification.method === 'notifications/configure') {
+    await handleConfigUpdate(notification.params?.config || notification.params);
+  }
+};
 
 // Start the server
 async function main() {

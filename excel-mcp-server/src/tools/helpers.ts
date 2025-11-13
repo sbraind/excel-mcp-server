@@ -1,9 +1,42 @@
 import ExcelJS from 'exceljs';
 import { promises as fs } from 'fs';
+import { resolve, dirname } from 'path';
 import { ERROR_MESSAGES } from '../constants.js';
 import type { CellValue } from 'exceljs';
 
+// Get user config from index.ts
+let allowedDirectories: string[] = [];
+
+export function setAllowedDirectories(dirs: string[]) {
+  allowedDirectories = dirs;
+}
+
+export function ensureFilePathAllowed(filePath: string): void {
+  // If no directories are configured, allow all paths
+  if (!allowedDirectories || allowedDirectories.length === 0) {
+    return;
+  }
+
+  const absolutePath = resolve(filePath);
+  const pathDir = dirname(absolutePath);
+
+  // Check if the file path is within any of the allowed directories
+  const isAllowed = allowedDirectories.some(allowedDir => {
+    const absoluteAllowedDir = resolve(allowedDir);
+    return absolutePath.startsWith(absoluteAllowedDir) || pathDir.startsWith(absoluteAllowedDir);
+  });
+
+  if (!isAllowed) {
+    throw new Error(
+      `Access denied: File path "${filePath}" is not within allowed directories. Allowed directories: ${allowedDirectories.join(', ')}`
+    );
+  }
+}
+
 export async function loadWorkbook(filePath: string): Promise<ExcelJS.Workbook> {
+  // Validate file path against allowed directories
+  ensureFilePathAllowed(filePath);
+
   try {
     await fs.access(filePath);
   } catch {
@@ -28,6 +61,9 @@ export function getSheet(workbook: ExcelJS.Workbook, sheetName: string): ExcelJS
 }
 
 export async function saveWorkbook(workbook: ExcelJS.Workbook, filePath: string, createBackup: boolean = false): Promise<void> {
+  // Validate file path against allowed directories
+  ensureFilePathAllowed(filePath);
+
   try {
     if (createBackup) {
       try {

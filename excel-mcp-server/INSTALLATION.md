@@ -24,19 +24,24 @@ La ruta completa del servidor es:
    nano ~/Library/Application\ Support/Claude/claude_desktop_config.json
    ```
 
-2. Agrega esta configuración (ajusta la ruta si es necesario):
+2. Agrega esta configuración:
    ```json
    {
      "mcpServers": {
        "excel": {
          "command": "node",
-         "args": [
-           "/home/user/Experimentos/excel-mcp-server/dist/index.js"
-         ]
+         "args": ["${__dirname}/dist/index.js"],
+         "config": {
+           "createBackupByDefault": false,
+           "defaultResponseFormat": "json",
+           "allowedDirectories": []
+         }
        }
      }
    }
    ```
+
+   **Note**: Use `${__dirname}` for automatic path resolution. For manual installations, you can also use absolute paths like `/home/user/Experimentos/excel-mcp-server/dist/index.js`.
 
 ### En Windows:
 
@@ -45,19 +50,24 @@ La ruta completa del servidor es:
    %APPDATA%\Claude\claude_desktop_config.json
    ```
 
-2. Agrega esta configuración (ajusta la ruta según tu instalación):
+2. Agrega esta configuración:
    ```json
    {
      "mcpServers": {
        "excel": {
          "command": "node",
-         "args": [
-           "C:\\Users\\TuUsuario\\Experimentos\\excel-mcp-server\\dist\\index.js"
-         ]
+         "args": ["${__dirname}/dist/index.js"],
+         "config": {
+           "createBackupByDefault": false,
+           "defaultResponseFormat": "json",
+           "allowedDirectories": []
+         }
        }
      }
    }
    ```
+
+   **Note**: Use `${__dirname}` for automatic path resolution. For manual installations, you can also use absolute paths like `C:\\Users\\TuUsuario\\Experimentos\\excel-mcp-server\\dist\\index.js`.
 
 ### En Linux:
 
@@ -72,13 +82,18 @@ La ruta completa del servidor es:
      "mcpServers": {
        "excel": {
          "command": "node",
-         "args": [
-           "/home/user/Experimentos/excel-mcp-server/dist/index.js"
-         ]
+         "args": ["${__dirname}/dist/index.js"],
+         "config": {
+           "createBackupByDefault": false,
+           "defaultResponseFormat": "json",
+           "allowedDirectories": []
+         }
        }
      }
    }
    ```
+
+   **Note**: Use `${__dirname}` for automatic path resolution. For manual installations, you can also use absolute paths like `/home/user/Experimentos/excel-mcp-server/dist/index.js`.
 
 ## Paso 4: Reinicia Claude Desktop
 
@@ -165,6 +180,48 @@ chmod +x /home/user/Experimentos/excel-mcp-server/dist/index.js
 
 ## Configuración Avanzada
 
+### Opciones de Configuración
+
+El servidor soporta las siguientes opciones de configuración:
+
+#### `createBackupByDefault` (boolean, default: `false`)
+Crea automáticamente archivos de respaldo (extensión `.backup`) antes de modificar archivos Excel:
+```json
+"config": {
+  "createBackupByDefault": true
+}
+```
+
+#### `defaultResponseFormat` (string: `"json"` o `"markdown"`, default: `"json"`)
+Formato por defecto para las respuestas de las herramientas:
+```json
+"config": {
+  "defaultResponseFormat": "markdown"
+}
+```
+
+#### `allowedDirectories` (array de strings, default: `[]`)
+Lista de directorios donde el servidor puede leer/escribir archivos Excel. Cuando está vacío, todos los directorios son accesibles. Úsalo para restringir el acceso a archivos por seguridad:
+```json
+"config": {
+  "allowedDirectories": [
+    "/home/user/Documents/Excel",
+    "/home/user/Projects/data"
+  ]
+}
+```
+
+El servidor rechazará cualquier operación de archivo fuera de estos directorios.
+
+### Validación de Entrada
+
+Todas las entradas de las herramientas son validadas usando esquemas Zod. Los parámetros inválidos retornarán mensajes de error claros indicando qué está mal:
+
+- Las direcciones de celda deben coincidir con el formato `A1`, `B2`, etc.
+- Los rangos deben coincidir con el formato `A1:D10`
+- Las rutas de archivo se verifican contra `allowedDirectories` si está configurado
+- Los parámetros requeridos faltantes se reportan inmediatamente
+
 ### Múltiples servidores MCP
 
 Si ya tienes otros servidores MCP configurados:
@@ -174,9 +231,10 @@ Si ya tienes otros servidores MCP configurados:
   "mcpServers": {
     "excel": {
       "command": "node",
-      "args": [
-        "/home/user/Experimentos/excel-mcp-server/dist/index.js"
-      ]
+      "args": ["${__dirname}/dist/index.js"],
+      "config": {
+        "allowedDirectories": ["/home/user/Documents"]
+      }
     },
     "otro-servidor": {
       "command": "...",

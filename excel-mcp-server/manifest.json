@@ -33,7 +33,7 @@
     "mcp_config": {
       "command": "node",
       "args": [
-        "dist/index.js"
+        "${__dirname}/dist/index.js"
       ],
       "env": {}
     }
@@ -200,6 +200,16 @@
       "description": "Default format for responses (json or markdown)",
       "default": "json",
       "required": false
+    },
+    "allowedDirectories": {
+      "type": "array",
+      "title": "Allowed Directories",
+      "description": "List of directories where the MCP server is allowed to read/write Excel files. Leave empty to allow all directories.",
+      "default": [],
+      "required": false,
+      "items": {
+        "type": "string"
+      }
     }
   }
 }

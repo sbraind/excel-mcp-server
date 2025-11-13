@@ -59,13 +59,13 @@ Add this configuration to your Claude Desktop config file:
   "mcpServers": {
     "excel": {
       "command": "node",
-      "args": ["/home/user/Experimentos/excel-mcp-server/dist/index.js"]
+      "args": ["${__dirname}/dist/index.js"]
     }
   }
 }
 ```
 
-**Note**: Adjust the path according to your installation directory.
+**Note**: When using the MCPB bundle or manual installation, use `${__dirname}` which automatically resolves to the server's directory. For manual installations without MCPB, you can also use absolute paths like `/home/user/Experimentos/excel-mcp-server/dist/index.js`.
 
 #### Step 3: Restart Claude Desktop
 
@@ -79,6 +79,55 @@ List the sheets in /home/user/Experimentos/excel-mcp-server/test.xlsx
 ```
 
 For detailed installation instructions and troubleshooting, see [INSTALLATION.md](INSTALLATION.md).
+
+---
+
+## Configuration Options
+
+The server supports several configuration options that can be set through Claude Desktop's MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "excel": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "config": {
+        "createBackupByDefault": false,
+        "defaultResponseFormat": "json",
+        "allowedDirectories": []
+      }
+    }
+  }
+}
+```
+
+### Available Options:
+
+- **`createBackupByDefault`** (boolean, default: `false`)
+  Automatically create backup files (`.backup` extension) before modifying Excel files. When enabled, every destructive operation will create a backup unless explicitly disabled in the tool call.
+
+- **`defaultResponseFormat`** (string: `"json"` or `"markdown"`, default: `"json"`)
+  Default format for tool responses. Can be overridden per tool call with the `responseFormat` parameter.
+
+- **`allowedDirectories`** (array of strings, default: `[]`)
+  List of directories where the server is allowed to read/write Excel files. When empty, all directories are accessible. Use this to restrict file access for security:
+  ```json
+  "allowedDirectories": [
+    "/home/user/Documents/Excel",
+    "/home/user/Projects/data"
+  ]
+  ```
+  The server will reject any file operations outside these directories.
+
+### Input Validation
+
+All tool inputs are validated using Zod schemas. Invalid parameters will return clear error messages indicating what's wrong:
+
+- Cell addresses must match format `A1`, `B2`, etc.
+- Ranges must match format `A1:D10`
+- File paths are checked against `allowedDirectories` if configured
+- Missing required parameters are reported immediately
 
 ---
 
