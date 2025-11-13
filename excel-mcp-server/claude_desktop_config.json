@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "excel": {
+      "command": "node",
+      "args": [
+        "/home/user/Experimentos/excel-mcp-server/dist/index.js"
+      ]
+    }
+  }
+}

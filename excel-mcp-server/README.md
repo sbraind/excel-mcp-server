@@ -19,25 +19,49 @@ npm install
 npm run build
 ```
 
-## Usage with Claude Desktop
+## Installation
+
+### Step 1: Build the project
+
+```bash
+cd /home/user/Experimentos/excel-mcp-server
+npm install
+npm run build
+```
+
+### Step 2: Configure Claude Desktop
 
 Add this configuration to your Claude Desktop config file:
 
-**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "excel": {
       "command": "node",
-      "args": ["/absolute/path/to/excel-mcp-server/dist/index.js"]
+      "args": ["/home/user/Experimentos/excel-mcp-server/dist/index.js"]
     }
   }
 }
 ```
 
-After adding the configuration, restart Claude Desktop.
+**Note**: Adjust the path according to your installation directory.
+
+### Step 3: Restart Claude Desktop
+
+Close and reopen Claude Desktop completely.
+
+### Step 4: Verify
+
+The server should now be available in Claude. Try:
+```
+List the sheets in /home/user/Experimentos/excel-mcp-server/test.xlsx
+```
+
+For detailed installation instructions and troubleshooting, see [INSTALLATION.md](INSTALLATION.md).
 
 ## Available Tools
 
