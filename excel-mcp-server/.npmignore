@@ -1,0 +1,25 @@
+# Source files
+src/
+tsconfig.json
+.gitignore
+
+# Development files
+*.mcpb
+.DS_Store
+node_modules/
+
+# Documentation (will be in README)
+FEATURE_SUMMARY.md
+BUNDLE.md
+INSTALLATION.md
+
+# Examples and tests
+create-test-file.js
+test-workbook.xlsx
+*.backup
+
+# Config files
+claude_desktop_config.json
+claude_desktop_config.example.json
+manifest.json
+icon.png

@@ -360,7 +360,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ['filePath', 'sheetName'],
         },
-        annotations: { ...TOOL_ANNOTATIONS.DESTRUCTIVE, destructiveHint: 'true' },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
       },
       {
         name: 'excel_rename_sheet',
@@ -408,7 +408,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ['filePath', 'sheetName', 'startRow', 'count'],
         },
-        annotations: { ...TOOL_ANNOTATIONS.DESTRUCTIVE, destructiveHint: 'true' },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
       },
       {
         name: 'excel_delete_columns',
@@ -424,7 +424,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ['filePath', 'sheetName', 'startColumn', 'count'],
         },
-        annotations: { ...TOOL_ANNOTATIONS.DESTRUCTIVE, destructiveHint: 'true' },
+        annotations: TOOL_ANNOTATIONS.DESTRUCTIVE,
       },
       {
         name: 'excel_copy_range',

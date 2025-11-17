@@ -1,7 +1,7 @@
 export const TOOL_ANNOTATIONS = {
-  READ_ONLY: { readOnlyHint: 'true' as const },
-  DESTRUCTIVE: { destructiveHint: 'true' as const },
-  IDEMPOTENT: { idempotentHint: 'true' as const },
+  READ_ONLY: { readOnlyHint: true },
+  DESTRUCTIVE: { destructiveHint: true },
+  IDEMPOTENT: { idempotentHint: true },
 };
 
 export const ERROR_MESSAGES = {
