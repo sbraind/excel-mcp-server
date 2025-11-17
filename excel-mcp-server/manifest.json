@@ -1,5 +1,5 @@
 {
-  "manifest_version": "0.3",
+  "dxt_version": "0.1",
   "name": "excel-mcp-server",
   "version": "2.0.0",
   "display_name": "Excel MCP Server",
@@ -27,6 +27,7 @@
   "homepage": "https://github.com/sbraind/Experimentos/tree/main/excel-mcp-server",
   "documentation": "https://github.com/sbraind/Experimentos/blob/main/excel-mcp-server/README.md",
   "support": "https://github.com/sbraind/Experimentos/issues",
+  "icon": "icon.png",
   "server": {
     "type": "node",
     "entry_point": "dist/index.js",

@@ -88,7 +88,9 @@ const server = new Server(
   },
   {
     capabilities: {
-      tools: {},
+      tools: {
+        listChanged: true,
+      },
     },
   }
 );
@@ -985,6 +987,23 @@ server.notification = async (notification: any) => {
     await handleConfigUpdate(notification.params?.config || notification.params);
   }
 };
+
+// Handle EPIPE errors gracefully
+process.stdout.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EPIPE') {
+    // Ignore EPIPE errors - they happen when the client disconnects
+    process.exit(0);
+  }
+});
+
+process.on('uncaughtException', (err: Error & { code?: string }) => {
+  if (err.code === 'EPIPE') {
+    // Ignore EPIPE errors
+    process.exit(0);
+  }
+  console.error('Uncaught exception:', err);
+  process.exit(1);
+});
 
 // Start the server
 async function main() {

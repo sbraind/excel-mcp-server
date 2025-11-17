@@ -3,7 +3,7 @@
     "excel": {
       "command": "node",
       "args": [
-        "/home/user/Experimentos/excel-mcp-server/dist/index.js"
+        "/Users/sebastianbrain/Desktop/Experimentos/Experimentos-1/excel-mcp-server/dist/index.js"
       ]
     }
   }
