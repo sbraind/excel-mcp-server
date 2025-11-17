@@ -10,6 +10,42 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY = 500; // 500ms
 
 /**
+ * Escape a string for safe use in AppleScript
+ * Escapes backslashes, double quotes, and single quotes
+ */
+function escapeAppleScriptString(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\')   // Backslashes first
+    .replace(/"/g, '\\"')      // Double quotes
+    .replace(/'/g, "\\'");     // Single quotes/apostrophes
+}
+
+/**
+ * Convert column number to Excel letter (1=A, 27=AA, etc.)
+ */
+function numberToColumnLetter(num: number): string {
+  let letter = '';
+  while (num > 0) {
+    const remainder = (num - 1) % 26;
+    letter = String.fromCharCode(65 + remainder) + letter;
+    num = Math.floor((num - 1) / 26);
+  }
+  return letter;
+}
+
+/**
+ * Format value for AppleScript based on type
+ * Numbers are passed without quotes, strings are escaped and quoted
+ */
+function formatValueForAppleScript(value: string | number): string {
+  if (typeof value === 'number') {
+    return String(value); // No quotes for numbers
+  }
+  // String: escape and wrap in quotes
+  return `"${escapeAppleScriptString(value)}"`;
+}
+
+/**
  * Execute AppleScript with timeout and retry logic
  */
 async function execAppleScriptWithRetry(
@@ -67,12 +103,13 @@ export async function isExcelRunning(): Promise<boolean> {
 export async function isFileOpenInExcel(filePath: string): Promise<boolean> {
   try {
     const fileName = basename(filePath);
+    const escapedFileName = escapeAppleScriptString(fileName);
     console.error(`[AppleScript] Checking if file is open: ${fileName}`);
 
     const script = `
       tell application "Microsoft Excel"
         set openWorkbooks to name of every workbook
-        return openWorkbooks contains "${fileName}"
+        return openWorkbooks contains "${escapedFileName}"
       end tell
     `;
     const result = await execAppleScriptWithRetry(script, 2, 5000);
@@ -98,18 +135,17 @@ export async function updateCellViaAppleScript(
   value: string | number
 ): Promise<void> {
   const fileName = basename(filePath);
-  // Escape both double quotes and single quotes (apostrophes) for AppleScript
-  const escapedValue = typeof value === 'string'
-    ? value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'")
-    : value;
+  const escapedFileName = escapeAppleScriptString(fileName);
+  const escapedSheetName = escapeAppleScriptString(sheetName);
+  const formattedValue = formatValueForAppleScript(value);
 
   console.error(`[AppleScript] Updating cell ${cellAddress} in "${fileName}"/"${sheetName}"`);
 
   const script = `
     tell application "Microsoft Excel"
-      tell workbook "${fileName}"
-        tell worksheet "${sheetName}"
-          set value of range "${cellAddress}" to "${escapedValue}"
+      tell workbook "${escapedFileName}"
+        tell worksheet "${escapedSheetName}"
+          set value of range "${cellAddress}" to ${formattedValue}
         end tell
       end tell
     end tell
@@ -138,19 +174,21 @@ export async function readCellViaAppleScript(
   cellAddress: string
 ): Promise<string> {
   const fileName = basename(filePath);
+  const escapedFileName = escapeAppleScriptString(fileName);
+  const escapedSheetName = escapeAppleScriptString(sheetName);
 
   const script = `
     tell application "Microsoft Excel"
-      tell workbook "${fileName}"
-        tell worksheet "${sheetName}"
+      tell workbook "${escapedFileName}"
+        tell worksheet "${escapedSheetName}"
           return value of range "${cellAddress}" as string
         end tell
       end tell
     end tell
   `;
 
-  const { stdout } = await execAsync(`osascript -e '${script}'`);
-  return stdout.trim();
+  const result = await execAppleScriptWithRetry(script);
+  return result;
 }
 
 /**
@@ -158,18 +196,19 @@ export async function readCellViaAppleScript(
  */
 export async function getSheetsViaAppleScript(filePath: string): Promise<string[]> {
   const fileName = basename(filePath);
+  const escapedFileName = escapeAppleScriptString(fileName);
 
   const script = `
     tell application "Microsoft Excel"
-      tell workbook "${fileName}"
+      tell workbook "${escapedFileName}"
         return name of every worksheet
       end tell
     end tell
   `;
 
-  const { stdout } = await execAsync(`osascript -e '${script}'`);
+  const result = await execAppleScriptWithRetry(script);
   // Parse the AppleScript list format: "Sheet1, Sheet2, Sheet3"
-  return stdout.trim().split(', ').filter(s => s.length > 0);
+  return result.split(', ').filter(s => s.length > 0);
 }
 
 /**
@@ -181,6 +220,8 @@ export async function addRowViaAppleScript(
   rowData: (string | number)[]
 ): Promise<void> {
   const fileName = basename(filePath);
+  const escapedFileName = escapeAppleScriptString(fileName);
+  const escapedSheetName = escapeAppleScriptString(sheetName);
 
   console.error(`[AppleScript] Adding row to "${fileName}"/"${sheetName}" with ${rowData.length} cells`);
 
@@ -188,8 +229,8 @@ export async function addRowViaAppleScript(
     // First, find the last row
     const lastRowScript = `
       tell application "Microsoft Excel"
-        tell workbook "${fileName}"
-          tell worksheet "${sheetName}"
+        tell workbook "${escapedFileName}"
+          tell worksheet "${escapedSheetName}"
             return count of (get used range)
           end tell
         end tell
@@ -204,19 +245,16 @@ export async function addRowViaAppleScript(
 
     // Add each cell value
     for (let i = 0; i < rowData.length; i++) {
-      const col = String.fromCharCode(65 + i); // A, B, C, ...
+      const col = numberToColumnLetter(i + 1); // 1=A, 2=B, ..., 27=AA, etc.
       const cellAddress = `${col}${newRow}`;
       const value = rowData[i];
-      // Escape both double quotes and single quotes (apostrophes) for AppleScript
-      const escapedValue = typeof value === 'string'
-        ? value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'")
-        : value;
+      const formattedValue = formatValueForAppleScript(value);
 
       const script = `
         tell application "Microsoft Excel"
-          tell workbook "${fileName}"
-            tell worksheet "${sheetName}"
-              set value of range "${cellAddress}" to "${escapedValue}"
+          tell workbook "${escapedFileName}"
+            tell worksheet "${escapedSheetName}"
+              set value of range "${cellAddress}" to ${formattedValue}
             end tell
           end tell
         end tell
@@ -241,12 +279,13 @@ export async function addRowViaAppleScript(
  */
 export async function saveFileViaAppleScript(filePath: string): Promise<void> {
   const fileName = basename(filePath);
+  const escapedFileName = escapeAppleScriptString(fileName);
 
   console.error(`[AppleScript] Saving file "${fileName}"`);
 
   const script = `
     tell application "Microsoft Excel"
-      tell workbook "${fileName}"
+      tell workbook "${escapedFileName}"
         save
       end tell
     end tell
@@ -272,16 +311,18 @@ export async function createSheetViaAppleScript(
   sheetName: string
 ): Promise<void> {
   const fileName = basename(filePath);
+  const escapedFileName = escapeAppleScriptString(fileName);
+  const escapedSheetName = escapeAppleScriptString(sheetName);
 
   const script = `
     tell application "Microsoft Excel"
-      tell workbook "${fileName}"
-        make new worksheet with properties {name:"${sheetName}"}
+      tell workbook "${escapedFileName}"
+        make new worksheet with properties {name:"${escapedSheetName}"}
       end tell
     end tell
   `;
 
-  await execAsync(`osascript -e '${script}'`);
+  await execAppleScriptWithRetry(script);
 }
 
 /**
@@ -292,14 +333,16 @@ export async function deleteSheetViaAppleScript(
   sheetName: string
 ): Promise<void> {
   const fileName = basename(filePath);
+  const escapedFileName = escapeAppleScriptString(fileName);
+  const escapedSheetName = escapeAppleScriptString(sheetName);
 
   const script = `
     tell application "Microsoft Excel"
-      tell workbook "${fileName}"
-        delete worksheet "${sheetName}"
+      tell workbook "${escapedFileName}"
+        delete worksheet "${escapedSheetName}"
       end tell
     end tell
   `;
 
-  await execAsync(`osascript -e '${script}'`);
+  await execAppleScriptWithRetry(script);
 }
