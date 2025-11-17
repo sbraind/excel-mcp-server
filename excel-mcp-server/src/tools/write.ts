@@ -45,10 +45,14 @@ export async function updateCell(
   createBackup: boolean = false
 ): Promise<string> {
   // Check if Excel is running and has this file open
+  console.error(`[updateCell] Checking execution method for ${filePath}`);
   const excelRunning = await isExcelRunning();
   const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
+  console.error(`[updateCell] Method selection: excelRunning=${excelRunning}, fileOpen=${fileOpen}`);
+
   if (fileOpen) {
+    console.error(`[updateCell] Using AppleScript method for real-time collaboration`);
     // Use AppleScript for real-time collaboration
     await updateCellViaAppleScript(filePath, sheetName, cellAddress, value);
     await saveFileViaAppleScript(filePath);
@@ -62,6 +66,7 @@ export async function updateCell(
       note: 'Changes are visible immediately in Excel'
     }, null, 2);
   } else {
+    console.error(`[updateCell] Using ExcelJS method (file-based editing)`);
     // Fallback to ExcelJS for file-based editing
     const workbook = await loadWorkbook(filePath);
     const sheet = getSheet(workbook, sheetName);
@@ -120,10 +125,14 @@ export async function addRow(
   createBackup: boolean = false
 ): Promise<string> {
   // Check if Excel is running and has this file open
+  console.error(`[addRow] Checking execution method for ${filePath}`);
   const excelRunning = await isExcelRunning();
   const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
+  console.error(`[addRow] Method selection: excelRunning=${excelRunning}, fileOpen=${fileOpen}`);
+
   if (fileOpen) {
+    console.error(`[addRow] Using AppleScript method for real-time collaboration`);
     // Use AppleScript for real-time collaboration
     await addRowViaAppleScript(filePath, sheetName, data);
     await saveFileViaAppleScript(filePath);
@@ -136,6 +145,7 @@ export async function addRow(
       note: 'Changes are visible immediately in Excel'
     }, null, 2);
   } else {
+    console.error(`[addRow] Using ExcelJS method (file-based editing)`);
     // Fallback to ExcelJS for file-based editing
     const workbook = await loadWorkbook(filePath);
     const sheet = getSheet(workbook, sheetName);
