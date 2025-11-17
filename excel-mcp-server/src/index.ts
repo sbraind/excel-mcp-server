@@ -5,6 +5,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  InitializeRequestSchema,
   ErrorCode,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
@@ -91,6 +92,20 @@ const server = new Server(
     },
   }
 );
+
+// Handle initialization
+server.setRequestHandler(InitializeRequestSchema, async () => {
+  return {
+    protocolVersion: '2024-11-05',
+    capabilities: {
+      tools: {},
+    },
+    serverInfo: {
+      name: 'excel-mcp-server',
+      version: '2.0.0',
+    },
+  };
+});
 
 // List all available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
