@@ -98,7 +98,10 @@ export async function updateCellViaAppleScript(
   value: string | number
 ): Promise<void> {
   const fileName = basename(filePath);
-  const escapedValue = typeof value === 'string' ? value.replace(/"/g, '\\"') : value;
+  // Escape both double quotes and single quotes (apostrophes) for AppleScript
+  const escapedValue = typeof value === 'string'
+    ? value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'")
+    : value;
 
   console.error(`[AppleScript] Updating cell ${cellAddress} in "${fileName}"/"${sheetName}"`);
 
@@ -204,7 +207,10 @@ export async function addRowViaAppleScript(
       const col = String.fromCharCode(65 + i); // A, B, C, ...
       const cellAddress = `${col}${newRow}`;
       const value = rowData[i];
-      const escapedValue = typeof value === 'string' ? value.replace(/"/g, '\\"') : value;
+      // Escape both double quotes and single quotes (apostrophes) for AppleScript
+      const escapedValue = typeof value === 'string'
+        ? value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/'/g, "\\'")
+        : value;
 
       const script = `
         tell application "Microsoft Excel"
