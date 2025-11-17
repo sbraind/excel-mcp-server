@@ -1,5 +1,12 @@
 import ExcelJS from 'exceljs';
 import { loadWorkbook, getSheet, saveWorkbook, parseRange } from './helpers.js';
+import {
+  isExcelRunning,
+  isFileOpenInExcel,
+  updateCellViaAppleScript,
+  saveFileViaAppleScript,
+  addRowViaAppleScript,
+} from './excel-applescript.js';
 
 export async function writeWorkbook(
   filePath: string,
@@ -37,20 +44,42 @@ export async function updateCell(
   value: any,
   createBackup: boolean = false
 ): Promise<string> {
-  const workbook = await loadWorkbook(filePath);
-  const sheet = getSheet(workbook, sheetName);
+  // Check if Excel is running and has this file open
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
-  const cell = sheet.getCell(cellAddress);
-  cell.value = value;
+  if (fileOpen) {
+    // Use AppleScript for real-time collaboration
+    await updateCellViaAppleScript(filePath, sheetName, cellAddress, value);
+    await saveFileViaAppleScript(filePath);
 
-  await saveWorkbook(workbook, filePath, createBackup);
+    return JSON.stringify({
+      success: true,
+      message: `Cell ${cellAddress} updated (via Excel)`,
+      cellAddress,
+      newValue: value,
+      method: 'applescript',
+      note: 'Changes are visible immediately in Excel'
+    }, null, 2);
+  } else {
+    // Fallback to ExcelJS for file-based editing
+    const workbook = await loadWorkbook(filePath);
+    const sheet = getSheet(workbook, sheetName);
 
-  return JSON.stringify({
-    success: true,
-    message: `Cell ${cellAddress} updated`,
-    cellAddress,
-    newValue: value,
-  }, null, 2);
+    const cell = sheet.getCell(cellAddress);
+    cell.value = value;
+
+    await saveWorkbook(workbook, filePath, createBackup);
+
+    return JSON.stringify({
+      success: true,
+      message: `Cell ${cellAddress} updated`,
+      cellAddress,
+      newValue: value,
+      method: 'exceljs',
+      note: 'File updated. Open in Excel to see changes.'
+    }, null, 2);
+  }
 }
 
 export async function writeRange(
@@ -90,20 +119,41 @@ export async function addRow(
   data: any[],
   createBackup: boolean = false
 ): Promise<string> {
-  const workbook = await loadWorkbook(filePath);
-  const sheet = getSheet(workbook, sheetName);
+  // Check if Excel is running and has this file open
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
-  const newRow = sheet.addRow(data);
-  newRow.commit();
+  if (fileOpen) {
+    // Use AppleScript for real-time collaboration
+    await addRowViaAppleScript(filePath, sheetName, data);
+    await saveFileViaAppleScript(filePath);
 
-  await saveWorkbook(workbook, filePath, createBackup);
+    return JSON.stringify({
+      success: true,
+      message: `Row added (via Excel)`,
+      cellsWritten: data.length,
+      method: 'applescript',
+      note: 'Changes are visible immediately in Excel'
+    }, null, 2);
+  } else {
+    // Fallback to ExcelJS for file-based editing
+    const workbook = await loadWorkbook(filePath);
+    const sheet = getSheet(workbook, sheetName);
 
-  return JSON.stringify({
-    success: true,
-    message: `Row added at position ${newRow.number}`,
-    rowNumber: newRow.number,
-    cellsWritten: data.length,
-  }, null, 2);
+    const newRow = sheet.addRow(data);
+    newRow.commit();
+
+    await saveWorkbook(workbook, filePath, createBackup);
+
+    return JSON.stringify({
+      success: true,
+      message: `Row added at position ${newRow.number}`,
+      rowNumber: newRow.number,
+      cellsWritten: data.length,
+      method: 'exceljs',
+      note: 'File updated. Open in Excel to see changes.'
+    }, null, 2);
+  }
 }
 
 export async function setFormula(

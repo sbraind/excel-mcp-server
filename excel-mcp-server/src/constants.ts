@@ -12,6 +12,7 @@ export const ERROR_MESSAGES = {
   WRITE_ERROR: 'Error writing to Excel file',
   READ_ERROR: 'Error reading Excel file',
   INVALID_FORMAT: 'Invalid format specification',
+  FILE_LOCKED: 'File is currently open in another application (like Excel). Please close the file and try again.',
 };
 
 export const DEFAULT_OPTIONS = {
