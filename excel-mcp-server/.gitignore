@@ -5,3 +5,4 @@ dist/
 *.xlsx
 !test.xlsx
 .env
+.DS_Store
