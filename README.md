@@ -1,9 +1,10 @@
 # Excel MCP Server
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![MCP](https://img.shields.io/badge/MCP-1.0-green.svg)](https://modelcontextprotocol.io/)
-[![ExcelJS](https://img.shields.io/badge/ExcelJS-4.4+-orange.svg)](https://github.com/exceljs/exceljs)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![MCP](https://img.shields.io/badge/MCP-Server-green)](https://modelcontextprotocol.io/)
+[![ExcelJS](https://img.shields.io/badge/ExcelJS-4.4+-217346)](https://github.com/exceljs/exceljs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
+[![Node](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 
 A powerful Model Context Protocol (MCP) server that enables AI assistants like Claude to work seamlessly with Excel files. Built with TypeScript, ExcelJS, and the official MCP SDK.
 
