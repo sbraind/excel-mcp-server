@@ -16,7 +16,6 @@ This is an Excel MCP (Model Context Protocol) Server built with TypeScript and E
 
 ### Build
 ```bash
-cd excel-mcp-server
 npm install
 npm run build
 ```

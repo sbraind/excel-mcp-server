@@ -1,6 +1,22 @@
 # Excel MCP Server
 
-A powerful Model Context Protocol (MCP) server for working with Excel files using TypeScript and ExcelJS.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![MCP](https://img.shields.io/badge/MCP-1.0-green.svg)](https://modelcontextprotocol.io/)
+[![ExcelJS](https://img.shields.io/badge/ExcelJS-4.4+-orange.svg)](https://github.com/exceljs/exceljs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A powerful Model Context Protocol (MCP) server that enables AI assistants like Claude to work seamlessly with Excel files. Built with TypeScript, ExcelJS, and the official MCP SDK.
+
+## About
+
+This MCP server provides **34 comprehensive tools** for Excel file manipulation, allowing Claude Desktop and other MCP clients to read, write, format, analyze, and transform Excel spreadsheets programmatically. Whether you need to extract data, create reports, apply complex formatting, or generate pivot tables and charts, this server has you covered.
+
+**Perfect for:**
+- 📊 Automated data analysis and reporting
+- 📈 Business intelligence workflows
+- 🔄 Data transformation and ETL processes
+- 📝 Report generation from templates
+- 🎨 Batch formatting and styling
 
 ## Features
 
@@ -19,7 +35,7 @@ A powerful Model Context Protocol (MCP) server for working with Excel files usin
 
 The easiest way to install this server is using the pre-built MCPB bundle:
 
-1. **Download** the latest `excel-mcp-server.mcpb` file from the [releases page](https://github.com/sbraind/Experimentos/releases)
+1. **Download** the latest `excel-mcp-server.mcpb` file from the [releases page](https://github.com/sbraind/excel-mcp-server/releases)
 2. **Double-click** the `.mcpb` file, or:
    - Open Claude Desktop
    - Go to **Settings** → **Extensions** → **Advanced Settings**
@@ -38,10 +54,11 @@ For more details, see [BUNDLE.md](BUNDLE.md).
 
 If you prefer to build from source:
 
-#### Step 1: Build the project
+#### Step 1: Clone and build the project
 
 ```bash
-cd /home/user/Experimentos/excel-mcp-server
+git clone https://github.com/sbraind/excel-mcp-server.git
+cd excel-mcp-server
 npm install
 npm run build
 ```
@@ -65,7 +82,7 @@ Add this configuration to your Claude Desktop config file:
 }
 ```
 
-**Note**: When using the MCPB bundle or manual installation, use `${__dirname}` which automatically resolves to the server's directory. For manual installations without MCPB, you can also use absolute paths like `/home/user/Experimentos/excel-mcp-server/dist/index.js`.
+**Note**: When using the MCPB bundle or manual installation, use `${__dirname}` which automatically resolves to the server's directory. For manual installations without MCPB, you can also use absolute paths like `/path/to/excel-mcp-server/dist/index.js`.
 
 #### Step 3: Restart Claude Desktop
 
@@ -75,7 +92,7 @@ Close and reopen Claude Desktop completely.
 
 The server should now be available in Claude. Try:
 ```
-List the sheets in /home/user/Experimentos/excel-mcp-server/test.xlsx
+Create a new Excel file at ~/Documents/test.xlsx with a sheet called "Sales" containing sample data
 ```
 
 For detailed installation instructions and troubleshooting, see [INSTALLATION.md](INSTALLATION.md).
@@ -114,8 +131,8 @@ The server supports several configuration options that can be set through Claude
   List of directories where the server is allowed to read/write Excel files. When empty, all directories are accessible. Use this to restrict file access for security:
   ```json
   "allowedDirectories": [
-    "/home/user/Documents/Excel",
-    "/home/user/Projects/data"
+    "~/Documents/Excel",
+    "~/Projects/data"
   ]
   ```
   The server will reject any file operations outside these directories.
@@ -128,6 +145,34 @@ All tool inputs are validated using Zod schemas. Invalid parameters will return 
 - Ranges must match format `A1:D10`
 - File paths are checked against `allowedDirectories` if configured
 - Missing required parameters are reported immediately
+
+---
+
+## Quick Start
+
+Once installed, you can start using the server immediately in Claude Desktop. Here are some example prompts:
+
+```
+Create a new Excel file with sales data for Q1 2024
+```
+
+```
+Read the data from Sheet1 in ~/Documents/report.xlsx
+```
+
+```
+Apply bold formatting and blue background to the header row in my sales spreadsheet
+```
+
+```
+Create a pivot table showing total sales by product and month
+```
+
+```
+Generate a column chart from the data in range A1:B10
+```
+
+For more examples and detailed use cases, see [FEATURE_SUMMARY.md](FEATURE_SUMMARY.md).
 
 ---
 
@@ -718,10 +763,38 @@ When reading large datasets, the markdown format automatically shows a preview o
 - `zod` - Schema validation
 - `typescript` - Type safety
 
+## Links & Resources
+
+- **Repository**: [github.com/sbraind/excel-mcp-server](https://github.com/sbraind/excel-mcp-server)
+- **Issues & Bug Reports**: [GitHub Issues](https://github.com/sbraind/excel-mcp-server/issues)
+- **Model Context Protocol**: [modelcontextprotocol.io](https://modelcontextprotocol.io/)
+- **Claude Desktop**: [claude.ai](https://claude.ai/)
+- **ExcelJS Documentation**: [github.com/exceljs/exceljs](https://github.com/exceljs/exceljs)
+
 ## License
 
-MIT
+MIT - See [LICENSE](LICENSE) for details.
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### How to Contribute
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Installation Guide](INSTALLATION.md) for common setup issues
+2. Review [existing issues](https://github.com/sbraind/excel-mcp-server/issues) to see if your problem has been addressed
+3. Open a [new issue](https://github.com/sbraind/excel-mcp-server/issues/new) with detailed information about your problem
+
+---
+
+**Built with ❤️ using [Claude Code](https://claude.com/claude-code)**
