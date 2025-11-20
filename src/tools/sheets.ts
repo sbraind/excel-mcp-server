@@ -1,25 +1,59 @@
 import { loadWorkbook, getSheet, saveWorkbook } from './helpers.js';
+import {
+  isExcelRunning,
+  isFileOpenInExcel,
+  createSheetViaAppleScript,
+  deleteSheetViaAppleScript,
+  renameSheetViaAppleScript,
+  saveFileViaAppleScript,
+} from './excel-applescript.js';
 
 export async function createSheet(
   filePath: string,
   sheetName: string,
   createBackup: boolean = false
 ): Promise<string> {
-  const workbook = await loadWorkbook(filePath);
+  // Check if Excel is running and if the file is open
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
-  // Check if sheet already exists
-  if (workbook.getWorksheet(sheetName)) {
-    throw new Error(`Sheet "${sheetName}" already exists`);
+  if (fileOpen) {
+    // Check if sheet already exists via ExcelJS (need to load workbook for validation)
+    const workbook = await loadWorkbook(filePath);
+    if (workbook.getWorksheet(sheetName)) {
+      throw new Error(`Sheet "${sheetName}" already exists`);
+    }
+
+    // AppleScript path
+    await createSheetViaAppleScript(filePath, sheetName);
+    await saveFileViaAppleScript(filePath);
+
+    return JSON.stringify({
+      success: true,
+      message: `Sheet "${sheetName}" created`,
+      sheetName,
+      method: 'applescript',
+      note: 'Changes visible immediately in Excel',
+    }, null, 2);
+  } else {
+    // ExcelJS fallback
+    const workbook = await loadWorkbook(filePath);
+
+    // Check if sheet already exists
+    if (workbook.getWorksheet(sheetName)) {
+      throw new Error(`Sheet "${sheetName}" already exists`);
+    }
+
+    workbook.addWorksheet(sheetName);
+    await saveWorkbook(workbook, filePath, createBackup);
+
+    return JSON.stringify({
+      success: true,
+      message: `Sheet "${sheetName}" created`,
+      sheetName,
+      method: 'exceljs',
+    }, null, 2);
   }
-
-  workbook.addWorksheet(sheetName);
-  await saveWorkbook(workbook, filePath, createBackup);
-
-  return JSON.stringify({
-    success: true,
-    message: `Sheet "${sheetName}" created`,
-    sheetName,
-  }, null, 2);
 }
 
 export async function deleteSheet(
@@ -27,17 +61,41 @@ export async function deleteSheet(
   sheetName: string,
   createBackup: boolean = false
 ): Promise<string> {
-  const workbook = await loadWorkbook(filePath);
-  const sheet = getSheet(workbook, sheetName);
+  // Check if Excel is running and if the file is open
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
-  workbook.removeWorksheet(sheet.id);
-  await saveWorkbook(workbook, filePath, createBackup);
+  if (fileOpen) {
+    // Validate sheet exists via ExcelJS (need to load workbook for validation)
+    const workbook = await loadWorkbook(filePath);
+    getSheet(workbook, sheetName); // Throws if sheet doesn't exist
 
-  return JSON.stringify({
-    success: true,
-    message: `Sheet "${sheetName}" deleted`,
-    sheetName,
-  }, null, 2);
+    // AppleScript path
+    await deleteSheetViaAppleScript(filePath, sheetName);
+    await saveFileViaAppleScript(filePath);
+
+    return JSON.stringify({
+      success: true,
+      message: `Sheet "${sheetName}" deleted`,
+      sheetName,
+      method: 'applescript',
+      note: 'Changes visible immediately in Excel',
+    }, null, 2);
+  } else {
+    // ExcelJS fallback
+    const workbook = await loadWorkbook(filePath);
+    const sheet = getSheet(workbook, sheetName);
+
+    workbook.removeWorksheet(sheet.id);
+    await saveWorkbook(workbook, filePath, createBackup);
+
+    return JSON.stringify({
+      success: true,
+      message: `Sheet "${sheetName}" deleted`,
+      sheetName,
+      method: 'exceljs',
+    }, null, 2);
+  }
 }
 
 export async function renameSheet(
@@ -46,23 +104,52 @@ export async function renameSheet(
   newName: string,
   createBackup: boolean = false
 ): Promise<string> {
-  const workbook = await loadWorkbook(filePath);
-  const sheet = getSheet(workbook, oldName);
+  // Check if Excel is running and if the file is open
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
-  // Check if new name already exists
-  if (workbook.getWorksheet(newName)) {
-    throw new Error(`Sheet "${newName}" already exists`);
+  if (fileOpen) {
+    // Check if new name already exists via ExcelJS (need to load workbook for validation)
+    const workbook = await loadWorkbook(filePath);
+    getSheet(workbook, oldName); // Throws if old sheet doesn't exist
+
+    if (workbook.getWorksheet(newName)) {
+      throw new Error(`Sheet "${newName}" already exists`);
+    }
+
+    // AppleScript path
+    await renameSheetViaAppleScript(filePath, oldName, newName);
+    await saveFileViaAppleScript(filePath);
+
+    return JSON.stringify({
+      success: true,
+      message: `Sheet renamed from "${oldName}" to "${newName}"`,
+      oldName,
+      newName,
+      method: 'applescript',
+      note: 'Changes visible immediately in Excel',
+    }, null, 2);
+  } else {
+    // ExcelJS fallback
+    const workbook = await loadWorkbook(filePath);
+    const sheet = getSheet(workbook, oldName);
+
+    // Check if new name already exists
+    if (workbook.getWorksheet(newName)) {
+      throw new Error(`Sheet "${newName}" already exists`);
+    }
+
+    sheet.name = newName;
+    await saveWorkbook(workbook, filePath, createBackup);
+
+    return JSON.stringify({
+      success: true,
+      message: `Sheet renamed from "${oldName}" to "${newName}"`,
+      oldName,
+      newName,
+      method: 'exceljs',
+    }, null, 2);
   }
-
-  sheet.name = newName;
-  await saveWorkbook(workbook, filePath, createBackup);
-
-  return JSON.stringify({
-    success: true,
-    message: `Sheet renamed from "${oldName}" to "${newName}"`,
-    oldName,
-    newName,
-  }, null, 2);
 }
 
 export async function duplicateSheet(

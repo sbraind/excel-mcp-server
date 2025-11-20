@@ -1,4 +1,11 @@
 import { loadWorkbook, getSheet, saveWorkbook, parseRange, columnLetterToNumber } from './helpers.js';
+import {
+  isExcelRunning,
+  isFileOpenInExcel,
+  deleteRowsViaAppleScript,
+  deleteColumnsViaAppleScript,
+  saveFileViaAppleScript,
+} from './excel-applescript.js';
 
 export async function deleteRows(
   filePath: string,
@@ -7,6 +14,35 @@ export async function deleteRows(
   count: number,
   createBackup: boolean = false
 ): Promise<string> {
+  console.error(`[deleteRows] Starting operation: file="${filePath}", sheet="${sheetName}", startRow=${startRow}, count=${count}`);
+
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
+
+  if (fileOpen) {
+    // AppleScript path - file is open in Excel
+    console.error(`[deleteRows] Using AppleScript (file is open in Excel)`);
+    try {
+      await deleteRowsViaAppleScript(filePath, sheetName, startRow, count);
+      await saveFileViaAppleScript(filePath);
+
+      console.error(`[deleteRows] AppleScript operation completed successfully`);
+      return JSON.stringify({
+        success: true,
+        message: `Deleted ${count} row(s) starting from row ${startRow}`,
+        startRow,
+        count,
+        method: 'applescript',
+        note: 'Changes visible immediately in open Excel file',
+      }, null, 2);
+    } catch (error: any) {
+      console.error(`[deleteRows] AppleScript failed, falling back to ExcelJS:`, error.message);
+      // Fall through to ExcelJS fallback
+    }
+  }
+
+  // ExcelJS fallback - file not open or AppleScript failed
+  console.error(`[deleteRows] Using ExcelJS fallback`);
   const workbook = await loadWorkbook(filePath);
   const sheet = getSheet(workbook, sheetName);
 
@@ -14,6 +50,7 @@ export async function deleteRows(
 
   await saveWorkbook(workbook, filePath, createBackup);
 
+  console.error(`[deleteRows] ExcelJS operation completed successfully`);
   return JSON.stringify({
     success: true,
     message: `Deleted ${count} row(s) starting from row ${startRow}`,
@@ -29,6 +66,36 @@ export async function deleteColumns(
   count: number,
   createBackup: boolean = false
 ): Promise<string> {
+  console.error(`[deleteColumns] Starting operation: file="${filePath}", sheet="${sheetName}", startColumn=${startColumn}, count=${count}`);
+
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
+
+  if (fileOpen) {
+    // AppleScript path - file is open in Excel
+    console.error(`[deleteColumns] Using AppleScript (file is open in Excel)`);
+    try {
+      // Pass startColumn directly (can be string or number - AppleScript helper handles both)
+      await deleteColumnsViaAppleScript(filePath, sheetName, startColumn, count);
+      await saveFileViaAppleScript(filePath);
+
+      console.error(`[deleteColumns] AppleScript operation completed successfully`);
+      return JSON.stringify({
+        success: true,
+        message: `Deleted ${count} column(s) starting from column ${startColumn}`,
+        startColumn,
+        count,
+        method: 'applescript',
+        note: 'Changes visible immediately in open Excel file',
+      }, null, 2);
+    } catch (error: any) {
+      console.error(`[deleteColumns] AppleScript failed, falling back to ExcelJS:`, error.message);
+      // Fall through to ExcelJS fallback
+    }
+  }
+
+  // ExcelJS fallback - file not open or AppleScript failed
+  console.error(`[deleteColumns] Using ExcelJS fallback`);
   const workbook = await loadWorkbook(filePath);
   const sheet = getSheet(workbook, sheetName);
 
@@ -37,6 +104,7 @@ export async function deleteColumns(
 
   await saveWorkbook(workbook, filePath, createBackup);
 
+  console.error(`[deleteColumns] ExcelJS operation completed successfully`);
   return JSON.stringify({
     success: true,
     message: `Deleted ${count} column(s) starting from column ${startColumn}`,

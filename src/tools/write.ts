@@ -1,11 +1,13 @@
 import ExcelJS from 'exceljs';
-import { loadWorkbook, getSheet, saveWorkbook, parseRange } from './helpers.js';
+import { loadWorkbook, getSheet, saveWorkbook, parseRange, columnNumberToLetter } from './helpers.js';
 import {
   isExcelRunning,
   isFileOpenInExcel,
   updateCellViaAppleScript,
   saveFileViaAppleScript,
   addRowViaAppleScript,
+  writeRangeViaAppleScript,
+  setFormulaViaAppleScript,
 } from './excel-applescript.js';
 
 export async function writeWorkbook(
@@ -94,28 +96,58 @@ export async function writeRange(
   data: any[][],
   createBackup: boolean = false
 ): Promise<string> {
-  const workbook = await loadWorkbook(filePath);
-  const sheet = getSheet(workbook, sheetName);
+  // Check if Excel is running and has this file open
+  console.error(`[writeRange] Checking execution method for ${filePath}`);
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
-  const { startRow, startCol } = parseRange(range);
+  console.error(`[writeRange] Method selection: excelRunning=${excelRunning}, fileOpen=${fileOpen}`);
 
-  data.forEach((row, rowIndex) => {
-    const excelRow = sheet.getRow(startRow + rowIndex);
-    row.forEach((value, colIndex) => {
-      excelRow.getCell(startCol + colIndex).value = value;
+  if (fileOpen) {
+    console.error(`[writeRange] Using AppleScript method for real-time collaboration`);
+    // Use AppleScript for real-time collaboration
+    const { startRow, startCol } = parseRange(range);
+    const startCell = `${columnNumberToLetter(startCol)}${startRow}`;
+    await writeRangeViaAppleScript(filePath, sheetName, startCell, data);
+    await saveFileViaAppleScript(filePath);
+
+    return JSON.stringify({
+      success: true,
+      message: `Range ${range} updated (via Excel)`,
+      range,
+      rowsWritten: data.length,
+      columnsWritten: data[0]?.length || 0,
+      method: 'applescript',
+      note: 'Changes are visible immediately in Excel'
+    }, null, 2);
+  } else {
+    console.error(`[writeRange] Using ExcelJS method (file-based editing)`);
+    // Fallback to ExcelJS for file-based editing
+    const workbook = await loadWorkbook(filePath);
+    const sheet = getSheet(workbook, sheetName);
+
+    const { startRow, startCol } = parseRange(range);
+
+    data.forEach((row, rowIndex) => {
+      const excelRow = sheet.getRow(startRow + rowIndex);
+      row.forEach((value, colIndex) => {
+        excelRow.getCell(startCol + colIndex).value = value;
+      });
+      excelRow.commit();
     });
-    excelRow.commit();
-  });
 
-  await saveWorkbook(workbook, filePath, createBackup);
+    await saveWorkbook(workbook, filePath, createBackup);
 
-  return JSON.stringify({
-    success: true,
-    message: `Range ${range} updated`,
-    range,
-    rowsWritten: data.length,
-    columnsWritten: data[0]?.length || 0,
-  }, null, 2);
+    return JSON.stringify({
+      success: true,
+      message: `Range ${range} updated`,
+      range,
+      rowsWritten: data.length,
+      columnsWritten: data[0]?.length || 0,
+      method: 'exceljs',
+      note: 'File updated. Open in Excel to see changes.'
+    }, null, 2);
+  }
 }
 
 export async function addRow(
@@ -173,20 +205,48 @@ export async function setFormula(
   formula: string,
   createBackup: boolean = false
 ): Promise<string> {
-  const workbook = await loadWorkbook(filePath);
-  const sheet = getSheet(workbook, sheetName);
+  // Check if Excel is running and has this file open
+  console.error(`[setFormula] Checking execution method for ${filePath}`);
+  const excelRunning = await isExcelRunning();
+  const fileOpen = excelRunning ? await isFileOpenInExcel(filePath) : false;
 
-  const cell = sheet.getCell(cellAddress);
+  console.error(`[setFormula] Method selection: excelRunning=${excelRunning}, fileOpen=${fileOpen}`);
+
   // Remove leading = if present
   const cleanFormula = formula.startsWith('=') ? formula.substring(1) : formula;
-  cell.value = { formula: cleanFormula };
 
-  await saveWorkbook(workbook, filePath, createBackup);
+  if (fileOpen) {
+    console.error(`[setFormula] Using AppleScript method for real-time collaboration`);
+    // Use AppleScript for real-time collaboration
+    await setFormulaViaAppleScript(filePath, sheetName, cellAddress, cleanFormula);
+    await saveFileViaAppleScript(filePath);
 
-  return JSON.stringify({
-    success: true,
-    message: `Formula set in cell ${cellAddress}`,
-    cellAddress,
-    formula: `=${cleanFormula}`,
-  }, null, 2);
+    return JSON.stringify({
+      success: true,
+      message: `Formula set in cell ${cellAddress} (via Excel)`,
+      cellAddress,
+      formula: `=${cleanFormula}`,
+      method: 'applescript',
+      note: 'Changes are visible immediately in Excel'
+    }, null, 2);
+  } else {
+    console.error(`[setFormula] Using ExcelJS method (file-based editing)`);
+    // Fallback to ExcelJS for file-based editing
+    const workbook = await loadWorkbook(filePath);
+    const sheet = getSheet(workbook, sheetName);
+
+    const cell = sheet.getCell(cellAddress);
+    cell.value = { formula: cleanFormula };
+
+    await saveWorkbook(workbook, filePath, createBackup);
+
+    return JSON.stringify({
+      success: true,
+      message: `Formula set in cell ${cellAddress}`,
+      cellAddress,
+      formula: `=${cleanFormula}`,
+      method: 'exceljs',
+      note: 'File updated. Open in Excel to see changes.'
+    }, null, 2);
+  }
 }

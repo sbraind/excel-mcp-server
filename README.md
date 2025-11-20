@@ -22,6 +22,7 @@ This MCP server provides **34 comprehensive tools** for Excel file manipulation,
 ## Features
 
 - **34 comprehensive tools** for Excel manipulation
+- **✨ Real-time Live Editing** - See changes instantly in Excel (macOS with Microsoft Excel)
 - Full support for reading, writing, formatting, and analyzing Excel files
 - **NEW**: Charts, Pivot Tables, Excel Tables, and Conditional Formatting
 - Built with the official MCP SDK
@@ -146,6 +147,90 @@ All tool inputs are validated using Zod schemas. Invalid parameters will return 
 - Ranges must match format `A1:D10`
 - File paths are checked against `allowedDirectories` if configured
 - Missing required parameters are reported immediately
+
+---
+
+## ✨ Real-Time Live Editing (macOS)
+
+The Excel MCP Server features **automatic real-time editing** for Excel files that are already open in Microsoft Excel on macOS. When a file is open, changes are applied instantly and become visible immediately—no need to close and reopen the file!
+
+### How It Works
+
+The server automatically detects when:
+1. **Microsoft Excel is running** on your Mac
+2. **The target file is open** in Excel
+
+When both conditions are met, the server uses **AppleScript** to modify the open Excel file directly. Otherwise, it falls back to file-based editing using ExcelJS.
+
+### Supported Operations (16 Live-Editing Tools)
+
+The following tools support real-time editing when files are open in Excel:
+
+**Writing:**
+- `excel_update_cell` - Update cell values instantly
+- `excel_add_row` - Add rows and see them appear immediately
+- `excel_write_range` - Write data ranges in real-time
+- `excel_set_formula` - Set formulas that calculate instantly
+
+**Formatting:**
+- `excel_format_cell` - Apply formatting (fonts, colors, borders) live
+- `excel_set_column_width` - Adjust column widths instantly
+- `excel_set_row_height` - Adjust row heights instantly
+- `excel_merge_cells` - Merge cells in real-time
+
+**Sheet Management:**
+- `excel_create_sheet` - Create new sheets that appear immediately
+- `excel_delete_sheet` - Delete sheets with instant feedback
+- `excel_rename_sheet` - Rename sheets in real-time
+
+**Row/Column Operations:**
+- `excel_delete_rows` - Delete rows and see them disappear instantly
+- `excel_delete_columns` - Delete columns in real-time
+- `excel_insert_rows` - Insert rows that appear immediately
+- `excel_insert_columns` - Insert columns instantly
+
+**Advanced:**
+- `excel_unmerge_cells` - Unmerge cells in real-time
+
+### Response Indicators
+
+Tool responses include a `method` field indicating which approach was used:
+
+```json
+{
+  "success": true,
+  "message": "Cell A1 updated (via Excel)",
+  "method": "applescript",
+  "note": "Changes are visible immediately in Excel"
+}
+```
+
+vs.
+
+```json
+{
+  "success": true,
+  "message": "Cell A1 updated",
+  "method": "exceljs",
+  "note": "File updated. Open in Excel to see changes."
+}
+```
+
+### Requirements
+
+- **Platform**: macOS only (AppleScript is a macOS technology)
+- **Application**: Microsoft Excel for Mac must be installed
+- **File State**: Target Excel file must be open in Excel
+
+### Benefits
+
+- **Instant Feedback**: See changes as they happen—perfect for interactive workflows
+- **No File Conflicts**: Works directly with the open file without save/reload cycles
+- **Seamless Experience**: Automatically falls back to file-based editing when Excel isn't available
+
+### Note
+
+Read-only operations (like `excel_read_sheet`, `excel_read_range`, etc.) don't require real-time editing as they don't modify files. Complex operations like pivot tables, charts, and conditional formatting use file-based editing for reliability.
 
 ---
 
