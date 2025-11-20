@@ -481,10 +481,13 @@ export async function setFormulaViaAppleScript(
   // Security: Validate cell address format before processing
   validateCellAddress(cellAddress);
 
+  // Ensure formula starts with "=" (Excel requirement for formulas)
+  const normalizedFormula = formula.startsWith('=') ? formula : `=${formula}`;
+
   const fileName = basename(filePath);
   const escapedFileName = escapeAppleScriptString(fileName);
   const escapedSheetName = escapeAppleScriptString(sheetName);
-  const escapedFormula = escapeAppleScriptString(formula);
+  const escapedFormula = escapeAppleScriptString(normalizedFormula);
 
   console.error(`[AppleScript] Setting formula in cell ${cellAddress} in "${fileName}"/"${sheetName}"`);
 
