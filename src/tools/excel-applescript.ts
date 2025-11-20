@@ -548,30 +548,30 @@ export async function formatCellViaAppleScript(
 
     if (format.fontName) {
       const escapedFontName = escapeAppleScriptString(format.fontName);
-      formatCommands.push(`set font name of range "${cellAddress}" to "${escapedFontName}"`);
+      formatCommands.push(`set name of font object of range "${cellAddress}" to "${escapedFontName}"`);
     }
 
     if (format.fontSize !== undefined) {
-      formatCommands.push(`set font size of range "${cellAddress}" to ${format.fontSize}`);
+      formatCommands.push(`set size of font object of range "${cellAddress}" to ${format.fontSize}`);
     }
 
     if (format.fontBold !== undefined) {
-      formatCommands.push(`set font bold of range "${cellAddress}" to ${format.fontBold}`);
+      formatCommands.push(`set bold of font object of range "${cellAddress}" to ${format.fontBold}`);
     }
 
     if (format.fontItalic !== undefined) {
-      formatCommands.push(`set font italic of range "${cellAddress}" to ${format.fontItalic}`);
+      formatCommands.push(`set italic of font object of range "${cellAddress}" to ${format.fontItalic}`);
     }
 
     if (format.fontColor) {
       // Color format in AppleScript: {red, green, blue} where each is 0-65535
       const escapedColor = escapeAppleScriptString(format.fontColor);
-      formatCommands.push(`set font color of range "${cellAddress}" to "${escapedColor}"`);
+      formatCommands.push(`set color of font object of range "${cellAddress}" to "${escapedColor}"`);
     }
 
     if (format.fillColor) {
       const escapedColor = escapeAppleScriptString(format.fillColor);
-      formatCommands.push(`set interior color of range "${cellAddress}" to "${escapedColor}"`);
+      formatCommands.push(`set color of interior object of range "${cellAddress}" to "${escapedColor}"`);
     }
 
     if (format.horizontalAlignment) {
@@ -638,7 +638,7 @@ export async function setColumnWidthViaAppleScript(
     tell application "Microsoft Excel"
       tell workbook "${escapedFileName}"
         tell worksheet "${escapedSheetName}"
-          set column width of column "${columnLetter}" to ${width}
+          set column width of column "${columnLetter}:${columnLetter}" to ${width}
         end tell
       end tell
     end tell
@@ -677,7 +677,7 @@ export async function setRowHeightViaAppleScript(
     tell application "Microsoft Excel"
       tell workbook "${escapedFileName}"
         tell worksheet "${escapedSheetName}"
-          set row height of row ${row} to ${height}
+          set row height of row "${row}:${row}" to ${height}
         end tell
       end tell
     end tell
